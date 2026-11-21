@@ -49,11 +49,14 @@ python3 -m pytest -q
 | POST | `/api/v1/emotion/quiz/submit` | 参与者 | 情境判断题作答 |
 | POST | `/api/v1/tasks/{id}/checkin` | 参与者 | 线下泛化任务打卡 |
 | GET | `/api/v1/reports/student/{id}` | 本人或管理员 | 练习次数、提示依赖率、平均反应时 |
+| POST | `/api/v1/coach/reply` | 参与者 | 受限陪练：给 2 条可试说法 + 理由；不做开放式生成 |
 | GET | `/api/v1/reports/cohort` | 管理员 | 群体聚合；**少于 10 人直接抑制** |
 | GET | `/api/v1/moderation/queue` | 管理员 | 待审风险条目 |
 | POST | `/api/v1/moderation/review` | 管理员 | 裁决：`escalate` / `close` |
 | GET | `/api/v1/admin/audit` | 管理员 | 最近 50 条审计 |
 | GET | `/api/v1/admin/outbox` | 管理员 | 已完成会话的签名事件 |
+| GET | `/api/v1/corpus/stats` | 管理员 | 语料库统计（仅话语观察用途） |
+| GET | `/api/v1/corpus/search?q=` | 管理员 | 清洁语料检索（不供聊天使用） |
 | DELETE | `/api/v1/subject` | 参与者 | 级联删除本人全部记录 |
 
 ### 最小调用链
@@ -91,6 +94,41 @@ curl -s -X POST localhost:8000/api/v1/sessions/$SID/turns \
 - **日志最小化**：应用默认不打印请求体；审计详情只存动作与版本号。
 - **Webhook 去标识**：事件只含 `participantId`（假名）、`sessionId`、`sceneId`、回合数与时间，不含姓名、学校、code。
 - **限流**：默认每 token 每分钟 120 次；`/health` 与 `/docs` 不限。
+
+## 语料清洗（BCC 自闭症语料）
+
+来源：北京语言大学 BCC 语料库，扩展检索 6 个词，原始 3,610 条。清洗命令：
+
+```bash
+python3 scripts/clean_corpus.py --zip /path/to/BCC_自闭症_语料.zip --out data/corpus
+python3 scripts/import_corpus.py --dir data/corpus --db data/xingqiao.db
+```
+
+当前结果：
+
+| 状态 | 条数 | 去向 |
+|---|---|---|
+| clean | 2,118 | 入库，`purpose=discourse`，仅管理员检索 |
+| review | 143 | 本地留存，待人工复核，不入库 |
+| quarantine | 906 | 本地留存，不展示、不入库 |
+
+规则：PII 脱敏（手机/邮箱/证件/账号）、性/自伤/暴力内容隔离、口语与近代汉语频道隔离、污名化与治愈叙事与错误归因降级、归一化去重。
+
+**重要边界**：BCC 是新闻/文学/网络话语的上下文切片，不是干预指南或临床语料。它只用于「人们怎么谈论自闭症」的词表与话语观察，**不进入聊天检索，不作为给孩子的回答依据**。语料受 BCC 使用条款约束，`data/corpus/` 已在 `.gitignore`，不要随仓库分发。
+
+「BCC 能不能支撑开放式 AI 陪伴」的专项审计见 [`docs/companion-corpus-audit.md`](docs/companion-corpus-audit.md)：3,610 条里严格筛完只剩 22 条，可用多轮对话为 0。
+
+## 关于「AI 聊天」：做的是受限陪练
+
+`POST /api/v1/coach/reply` 不做开放式聊天，只做三件事：
+
+1. 识别这句话的意图（请求/命令/回避/接受拒绝/道歉/辩解等）；
+2. 返回 2 条可以照着试的说法，以及每条为什么；
+3. 命中自伤/暴力词时停止生成、升级人工审核。
+
+没有模型自由生成、没有长期记忆、没有「AI 朋友」人格。理由：面向未成年人，开放式陪伴会带来依赖、错误建议和危机处理风险；而 BMJ 2023 的证据显示，起作用的通常是结构化练习与成人反馈，不是模型规模。
+
+如果赛后要接 LLM，只允许作为「把审核过的建议改写得更自然」的受约束层，并且必须保留同一套风险拦截与人工复核。
 
 ## 数据表
 

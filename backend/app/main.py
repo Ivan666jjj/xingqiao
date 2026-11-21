@@ -10,8 +10,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
+from .coach import DISCLAIMER, suggestions_for
 from .config import load_config
 from .content import Content
+from .corpus import search as corpus_search
+from .corpus import stats as corpus_stats
 from .db import Database
 from .security import (
     new_participant_token,
@@ -71,6 +74,11 @@ class QuizIn(BaseModel):
 class TaskCheckinIn(BaseModel):
     note: str | None = Field(default=None, max_length=300)
     mood: int | None = Field(default=None, ge=0, le=4)
+
+
+class CoachIn(BaseModel):
+    sceneId: str
+    text: str = Field(min_length=1, max_length=500)
 
 
 RISK_TERMS = {
@@ -145,6 +153,23 @@ def create_app(db_path: str | None = None) -> FastAPI:
             (pid,),
         )
         return row is not None
+
+    def add_moderation(pid: str, source: str, ref_id: str, text: str, flags: list[str]) -> int:
+        cur = db.execute(
+            """INSERT INTO moderation_items
+               (participant_id, source, ref_id, excerpt, risk_flags, status, created_at)
+               VALUES (?,?,?,?,?,?,?)""",
+            (
+                pid,
+                source,
+                ref_id,
+                (text or "")[:60],
+                json.dumps(flags),
+                "pending",
+                now(),
+            ),
+        )
+        return cur.lastrowid
 
     def turn_payload(scene: dict, index: int, hint: str | None = None):
         if index >= len(scene["turns"]):
@@ -285,19 +310,8 @@ def create_app(db_path: str | None = None) -> FastAPI:
 
         risk_flags = detect_risk(body.freeText)
         if risk_flags:
-            cur = db.execute(
-                """INSERT INTO moderation_items
-                   (participant_id, source, ref_id, excerpt, risk_flags, status, created_at)
-                   VALUES (?,?,?,?,?,?,?)""",
-                (
-                    p["id"],
-                    "turn_free_text",
-                    sid,
-                    (body.freeText or "")[:60],
-                    json.dumps(risk_flags),
-                    "pending",
-                    now(),
-                ),
+            moderation_id = add_moderation(
+                p["id"], "turn_free_text", sid, body.freeText or "", risk_flags
             )
             db.execute(
                 "UPDATE sessions SET status = 'flagged', current_turn = ? WHERE id = ?",
@@ -310,7 +324,7 @@ def create_app(db_path: str | None = None) -> FastAPI:
                 "hint": None,
                 "next": None,
                 "completed": False,
-                "safety": {"escalated": True, "moderationId": cur.lastrowid},
+                "safety": {"escalated": True, "moderationId": moderation_id},
             }
 
         next_index = body.turnIndex + 1
@@ -591,5 +605,45 @@ def create_app(db_path: str | None = None) -> FastAPI:
             (p["id"], None, "task", task_id, body.mood, None, body.note, now()),
         )
         return {"checkinId": cur.lastrowid, "taskId": task_id, "mood": body.mood}
+
+    @app.post("/api/v1/coach/reply")
+    def coach_reply(body: CoachIn, authorization: str | None = Header(None)):
+        p = require_participant(authorization)
+        if not has_consent(p["id"]):
+            raise HTTPException(status_code=403, detail="consent_required")
+        if body.sceneId not in content.scenes:
+            raise HTTPException(status_code=404, detail="scene_not_found")
+
+        risk_flags = detect_risk(body.text)
+        if risk_flags:
+            moderation_id = add_moderation(
+                p["id"], "coach_free_text", body.sceneId, body.text, risk_flags
+            )
+            return {
+                "matched": False,
+                "intent": "safety",
+                "reply": SAFE_REPLY,
+                "suggestions": [],
+                "disclaimer": DISCLAIMER,
+                "safety": {"escalated": True, "moderationId": moderation_id},
+            }
+
+        return suggestions_for(body.sceneId, body.text)
+
+    @app.get("/api/v1/corpus/stats")
+    def corpus_stats_endpoint(x_admin_token: str | None = Header(None)):
+        if not admin_ok(x_admin_token):
+            raise HTTPException(status_code=401, detail="invalid_admin_token")
+        return corpus_stats(db)
+
+    @app.get("/api/v1/corpus/search")
+    def corpus_search_endpoint(
+        q: str = "", limit: int = 10, x_admin_token: str | None = Header(None)
+    ):
+        if not admin_ok(x_admin_token):
+            raise HTTPException(status_code=401, detail="invalid_admin_token")
+        if not q.strip():
+            raise HTTPException(status_code=400, detail="query_required")
+        return {"items": corpus_search(db, q, limit)}
 
     return app

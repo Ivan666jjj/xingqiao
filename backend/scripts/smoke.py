@@ -63,6 +63,12 @@ def main():
     assert code == 201, (code, consent)
     print("consent:", consent["consentId"])
 
+    code, coach = call(
+        "POST", "/api/v1/coach/reply", {"sceneId": "borrow", "text": "给我笔记"}, auth
+    )
+    assert code == 200 and coach["suggestions"], (code, coach)
+    print("coach:", coach["intent"], "| suggestions:", len(coach["suggestions"]))
+
     code, scenes = call("GET", "/api/v1/scenes")
     assert code == 200 and scenes["items"], (code, scenes)
     print("scenes:", [s["id"] for s in scenes["items"]])
@@ -88,6 +94,10 @@ def main():
     code, report = call("GET", f"/api/v1/reports/student/{p['participantId']}", None, auth)
     assert code == 200, (code, report)
     print("report:", json.dumps(report, ensure_ascii=False, indent=2))
+
+    code, corpus = call("GET", "/api/v1/corpus/stats", None, {"X-Admin-Token": ADMIN})
+    assert code == 200, (code, corpus)
+    print("corpus:", corpus["total"], "docs |", corpus["purpose"])
     print("\nOK")
 
 

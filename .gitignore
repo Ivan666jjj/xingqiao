@@ -7,3 +7,5 @@ backend/.env
 backend/data/*.db
 backend/data/*.db-wal
 backend/data/*.db-shm
+# BCC 语料不随仓库分发
+backend/data/corpus/
