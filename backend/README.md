@@ -55,6 +55,8 @@ python3 -m pytest -q
 | POST | `/api/v1/moderation/review` | 管理员 | 裁决：`escalate` / `close` |
 | GET | `/api/v1/admin/audit` | 管理员 | 最近 50 条审计 |
 | GET | `/api/v1/admin/outbox` | 管理员 | 已完成会话的签名事件 |
+| POST | `/api/v1/safety/check` | 管理员 | 输出侧护栏：模型草稿先过规则再发 |
+| GET | `/api/v1/rules` | 管理员 | 负规则目录、安全短语与 BCC 证据 |
 | GET | `/api/v1/corpus/stats` | 管理员 | 语料库统计（仅话语观察用途） |
 | GET | `/api/v1/corpus/search?q=` | 管理员 | 清洁语料检索（不供聊天使用） |
 | DELETE | `/api/v1/subject` | 参与者 | 级联删除本人全部记录 |
@@ -129,6 +131,22 @@ python3 scripts/import_corpus.py --dir data/corpus --db data/xingqiao.db
 没有模型自由生成、没有长期记忆、没有「AI 朋友」人格。理由：面向未成年人，开放式陪伴会带来依赖、错误建议和危机处理风险；而 BMJ 2023 的证据显示，起作用的通常是结构化练习与成人反馈，不是模型规模。
 
 如果赛后要接 LLM，只允许作为「把审核过的建议改写得更自然」的受约束层，并且必须保留同一套风险拦截与人工复核。
+
+## 输出侧负规则包（开放式陪伴用）
+
+如果接入方要接自己的 LLM 做开放陪伴，**在把模型草稿发给用户之前**调用：
+
+```bash
+curl -s -X POST http://127.0.0.1:8000/api/v1/safety/check \
+  -H 'X-Admin-Token: <token>' -H 'Content-Type: application/json' \
+  -d '{"text":"自闭症是可以治愈的。"}'
+```
+
+返回 `allowed`、命中的规则、原因和 `safeAlternatives`。`allowed:false` 时必须重写或换成安全表达。
+
+规则共 13 条，分治愈叙事、诊断断言、污名化、强迫眼神、正常化压力、医疗建议、依赖诱导、否定感受、空头保证、夸大效果、危机淡化、索要隐私、幼儿化。BCC 直接支持其中五类（治愈 42 条、污名 123 条、诊断 2 条、正常化 2 条、危机淡化 2 条），其余来自研究与伦理要求。
+
+完整接入说明：[`docs/rule-pack.md`](docs/rule-pack.md)。
 
 ## 数据表
 

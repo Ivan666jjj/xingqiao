@@ -1,0 +1,73 @@
+{
+  "version": "2026-11-21.1",
+  "source": "BCC 自闭症及扩展词语料",
+  "sourceRows": 3610,
+  "note": "计数来自原始语料，仅用于证明规则必要性；不包含原文。",
+  "rules": {
+    "cure-01": {
+      "category": "cure_narrative",
+      "rows": 42,
+      "matches": 45
+    },
+    "diagnose-01": {
+      "category": "diagnosis_claim",
+      "rows": 2,
+      "matches": 2
+    },
+    "stigma-01": {
+      "category": "stigma",
+      "rows": 123,
+      "matches": 154
+    },
+    "eye-01": {
+      "category": "forced_eye_contact",
+      "rows": 0,
+      "matches": 0
+    },
+    "normal-01": {
+      "category": "normalization_pressure",
+      "rows": 2,
+      "matches": 2
+    },
+    "medical-01": {
+      "category": "medical_advice",
+      "rows": 0,
+      "matches": 0
+    },
+    "depend-01": {
+      "category": "dependency",
+      "rows": 0,
+      "matches": 0
+    },
+    "minimize-01": {
+      "category": "minimizing",
+      "rows": 0,
+      "matches": 0
+    },
+    "false-01": {
+      "category": "false_reassurance",
+      "rows": 0,
+      "matches": 0
+    },
+    "outcome-01": {
+      "category": "guaranteed_outcome",
+      "rows": 0,
+      "matches": 0
+    },
+    "crisis-01": {
+      "category": "crisis_mishandling",
+      "rows": 2,
+      "matches": 2
+    },
+    "privacy-01": {
+      "category": "privacy_probe",
+      "rows": 0,
+      "matches": 0
+    },
+    "infant-01": {
+      "category": "infantilizing",
+      "rows": 0,
+      "matches": 0
+    }
+  }
+}

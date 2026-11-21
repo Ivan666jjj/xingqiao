@@ -98,6 +98,15 @@ def main():
     code, corpus = call("GET", "/api/v1/corpus/stats", None, {"X-Admin-Token": ADMIN})
     assert code == 200, (code, corpus)
     print("corpus:", corpus["total"], "docs |", corpus["purpose"])
+
+    code, verdict = call(
+        "POST",
+        "/api/v1/safety/check",
+        {"text": "自闭症是可以治愈的。"},
+        {"X-Admin-Token": ADMIN},
+    )
+    assert code == 200 and verdict["allowed"] is False, (code, verdict)
+    print("guard:", verdict["hits"][0]["ruleId"], "| alternatives:", len(verdict["safeAlternatives"]))
     print("\nOK")
 
 

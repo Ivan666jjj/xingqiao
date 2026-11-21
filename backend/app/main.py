@@ -16,6 +16,7 @@ from .content import Content
 from .corpus import search as corpus_search
 from .corpus import stats as corpus_stats
 from .db import Database
+from .rules import SAFE_PHRASES, VERSION as RULES_VERSION, check_text, list_rules
 from .security import (
     new_participant_token,
     ref_hash,
@@ -79,6 +80,10 @@ class TaskCheckinIn(BaseModel):
 class CoachIn(BaseModel):
     sceneId: str
     text: str = Field(min_length=1, max_length=500)
+
+
+class SafetyIn(BaseModel):
+    text: str = Field(min_length=1, max_length=2000)
 
 
 RISK_TERMS = {
@@ -629,6 +634,22 @@ def create_app(db_path: str | None = None) -> FastAPI:
             }
 
         return suggestions_for(body.sceneId, body.text)
+
+    @app.post("/api/v1/safety/check")
+    def safety_check(body: SafetyIn, x_admin_token: str | None = Header(None)):
+        if not admin_ok(x_admin_token):
+            raise HTTPException(status_code=401, detail="invalid_admin_token")
+        return check_text(body.text)
+
+    @app.get("/api/v1/rules")
+    def rules_catalog(x_admin_token: str | None = Header(None)):
+        if not admin_ok(x_admin_token):
+            raise HTTPException(status_code=401, detail="invalid_admin_token")
+        return {
+            "version": RULES_VERSION,
+            "items": list_rules(),
+            "safePhrases": SAFE_PHRASES,
+        }
 
     @app.get("/api/v1/corpus/stats")
     def corpus_stats_endpoint(x_admin_token: str | None = Header(None)):
