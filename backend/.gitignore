@@ -8,3 +8,6 @@ data/*.db-wal
 data/*.db-shm
 # BCC 语料不随仓库分发
 data/corpus/
+
+# 原始语料仅队内，不进公开仓库
+data/raw/

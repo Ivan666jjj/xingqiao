@@ -116,7 +116,9 @@ python3 scripts/import_corpus.py --dir data/corpus --db data/xingqiao.db
 
 规则：PII 脱敏（手机/邮箱/证件/账号）、性/自伤/暴力内容隔离、口语与近代汉语频道隔离、污名化与治愈叙事与错误归因降级、归一化去重。
 
-**重要边界**：BCC 是新闻/文学/网络话语的上下文切片，不是干预指南或临床语料。它只用于「人们怎么谈论自闭症」的词表与话语观察，**不进入聊天检索，不作为给孩子的回答依据**。语料受 BCC 使用条款约束，`data/corpus/` 已在 `.gitignore`，不要随仓库分发。
+**重要边界**：BCC 是新闻/文学/网络话语的上下文切片，不是干预指南或临床语料。它只用于「人们怎么谈论自闭症」的词表与话语观察，**不进入聊天检索，不作为给孩子的回答依据**。语料受 BCC 使用条款约束，`data/raw/` 与 `data/corpus/` 已在 `.gitignore`，不要随公开仓库分发。
+
+队内交付 zip 中额外包含 `data/raw/`（原始 zip + 解压 CSV）与 `data/corpus/` 的 clean/review/report，方便队友离线复现；`quarantine.jsonl` 不直接放入，需要时用 `clean_corpus.py` 从原始 zip 重建。**这个 zip 只发队内，不再二次公开。**
 
 「BCC 能不能支撑开放式 AI 陪伴」的专项审计见 [`docs/companion-corpus-audit.md`](docs/companion-corpus-audit.md)：3,610 条里严格筛完只剩 22 条，可用多轮对话为 0。
 

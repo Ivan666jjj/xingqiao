@@ -9,3 +9,6 @@ backend/data/*.db-wal
 backend/data/*.db-shm
 # BCC 语料不随仓库分发
 backend/data/corpus/
+
+# 原始语料仅队内，不进公开仓库
+backend/data/raw/
