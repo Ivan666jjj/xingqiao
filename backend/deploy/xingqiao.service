@@ -1,0 +1,18 @@
+[Unit]
+Description=Xingqiao API
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/xingqiao/backend
+EnvironmentFile=/opt/xingqiao/backend/.env
+ExecStart=/opt/xingqiao/backend/.venv/bin/uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/opt/xingqiao/backend/data /opt/xingqiao/backup
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>星桥 · 48 小时黑客松计划书与可玩原型</title>
+<meta name="description" content="面向自闭症谱系青少年社会生活技能练习与记录平台：问题、方案、48 小时计划、分工、技术、伦理，以及可现场操作的社交脚本原型。">
+<style>
+/* ---------- 设计令牌：安静、可预测、低感官刺激（与产品理念一致） ---------- */
+:root{
+  --paper:#f6f4ee;
+  --paper-2:#efece4;
+  --ink:#1a1a18;
+  --ink-2:#4a4a45;
+  --ink-3:#7c7c74;
+  --rule:#d7d3c8;
+  --rule-2:#c2bdb0;
+  --pine:#2c5a4c;
+  --pine-soft:#e3ece7;
+  --clay:#a8502a;
+  --clay-soft:#f3e6dd;
+  --slate:#3f5b74;
+  --slate-soft:#e5ebf0;
+  --amber:#8a6a17;
+  --amber-soft:#f4ecd8;
+  --serif:"Noto Serif SC","Songti SC","STSong","Source Han Serif SC",serif;
+  --sans:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;
+  --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+  --step--1:.82rem;
+  --step-0:1rem;
+  --step-1:1.18rem;
+  --step-2:1.5rem;
+  --step-3:2rem;
+  --step-4:2.6rem;
+  --measure:68ch;
+  --rail:190px;
+  --ease:cubic-bezier(.2,.7,.2,1);
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:var(--sans);font-size:var(--step-0);line-height:1.75;
+  text-rendering:optimizeLegibility;
+}
+body.big{font-size:1.12rem}
+body.hc{--paper:#fff;--paper-2:#f2f2f2;--ink:#000;--ink-2:#1f1f1f;--ink-3:#454545;--rule:#8d8d8d;--rule-2:#5c5c5c;--pine:#124a36;--clay:#8a3d16;--slate:#1d3c55}
+body.no-motion *,body.no-motion *::before,body.no-motion *::after{
+  animation:none!important;transition:none!important;scroll-behavior:auto!important}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  html{scroll-behavior:auto}
+}
+
+/* ---------- 版式 ---------- */
+h1,h2,h3,h4{font-family:var(--serif);font-weight:600;line-height:1.25;margin:0}
+h1{font-size:clamp(2rem,4.4vw,var(--step-4));letter-spacing:.01em}
+h2{font-size:var(--step-3);margin-bottom:.4em}
+h3{font-size:var(--step-2);margin-bottom:.35em}
+h4{font-size:var(--step-1);margin-bottom:.3em}
+p{margin:0 0 1em}
+a{color:var(--pine);text-decoration-color:var(--rule-2);text-underline-offset:.18em}
+a:hover{text-decoration-color:currentColor}
+:where(a,button,input,summary,[tabindex]):focus-visible{
+  outline:2px solid var(--clay);outline-offset:3px;border-radius:2px}
+code,kbd{font-family:var(--mono);font-size:.88em;background:var(--paper-2);
+  padding:.1em .35em;border:1px solid var(--rule);border-radius:2px}
+ul,ol{padding-left:1.35em;margin:0 0 1em}
+li{margin:.3em 0}
+small{font-size:var(--step--1);color:var(--ink-2)}
+.kicker{font-family:var(--mono);font-size:var(--step--1);letter-spacing:.14em;
+  text-transform:uppercase;color:var(--pine);margin:0 0 .9em}
+.lede{font-size:var(--step-1);color:var(--ink-2);max-width:var(--measure)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* ---------- 骨架：左侧 48h 轨道 + 主内容 ---------- */
+.shell{display:grid;grid-template-columns:var(--rail) minmax(0,1fr);
+  align-items:start;max-width:1320px;margin:0 auto;min-width:0}
+.rail{position:sticky;top:0;height:100vh;padding:2.2rem 1.4rem 2.2rem 1.6rem;
+  border-right:1px solid var(--rule);display:flex;flex-direction:column;gap:1rem;
+  background:linear-gradient(var(--paper),var(--paper))}
+.rail .rail-head{font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;
+  color:var(--ink-3);text-transform:uppercase}
+.track{list-style:none;margin:0;padding:0;position:relative;flex:1;overflow-y:auto}
+.track::before{content:"";position:absolute;left:4px;top:.55em;bottom:.55em;
+  width:1px;background:var(--rule-2)}
+.track li{position:relative;padding:.1rem 0 .1rem 1.35rem;margin:.45rem 0;
+  font-size:.8rem;line-height:1.45;color:var(--ink-3);cursor:pointer;
+  transition:color .25s var(--ease)}
+.track li::before{content:"";position:absolute;left:0;top:.62em;width:9px;height:9px;
+  border:1px solid var(--rule-2);background:var(--paper);border-radius:50%;
+  transition:background .25s var(--ease),border-color .25s var(--ease),transform .25s var(--ease)}
+.track li .t{font-family:var(--mono);display:block;letter-spacing:.04em}
+.track li .l{display:block}
+.track li:hover{color:var(--ink-2)}
+.track li[aria-current="true"]{color:var(--ink)}
+.track li[aria-current="true"]::before{background:var(--pine);border-color:var(--pine);
+  transform:scale(1.25)}
+.rail .rail-foot{font-size:.72rem;color:var(--ink-3);line-height:1.5}
+main{padding:0 clamp(1.2rem,4vw,3.6rem) 6rem;min-width:0}
+
+/* ---------- 区块 ---------- */
+section{padding:clamp(3rem,7vw,5.5rem) 0;border-bottom:1px solid var(--rule);scroll-margin-top:1rem}
+section:last-of-type{border-bottom:0}
+.wrap{max-width:var(--measure)}
+.wide{max-width:none}
+.sec-head{display:flex;align-items:baseline;gap:1rem;margin-bottom:1.6rem;flex-wrap:wrap}
+.sec-head .idx{font-family:var(--mono);font-size:var(--step--1);color:var(--ink-3);
+  border:1px solid var(--rule);padding:.1em .5em;border-radius:2px}
+
+/* ---------- 首屏 ---------- */
+.hero{padding-top:clamp(3.4rem,8vw,6rem);border-bottom:1px solid var(--rule)}
+.hero h1{max-width:22ch;margin-bottom:.5em}
+.hero .sub{font-family:var(--serif);font-size:var(--step-1);color:var(--ink-2);
+  max-width:52ch;margin-bottom:2rem;line-height:1.7}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+  gap:0;border-top:1px solid var(--ink);margin-bottom:2rem}
+.facts div{padding:1.1rem 1.2rem 1.1rem 0;border-right:1px solid var(--rule)}
+.facts div:last-child{border-right:0}
+.facts .k{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink-3);display:block;margin-bottom:.35em}
+.facts .v{font-family:var(--serif);font-size:var(--step-2);line-height:1.1;display:block}
+.facts .n{font-size:.82rem;color:var(--ink-2);display:block;margin-top:.3em;line-height:1.5}
+.cta-row{display:flex;gap:.8rem;flex-wrap:wrap;align-items:center}
+
+/* ---------- 控件 ---------- */
+button{font:inherit;cursor:pointer}
+.btn{background:var(--ink);color:var(--paper);border:1px solid var(--ink);
+  padding:.72em 1.25em;border-radius:2px;letter-spacing:.02em;
+  transition:background .2s var(--ease),transform .2s var(--ease)}
+.btn:hover{background:#000}
+.btn:active{transform:translateY(1px)}
+.btn-ghost{background:transparent;color:var(--ink);border:1px solid var(--rule-2)}
+.btn-ghost:hover{background:var(--paper-2)}
+.btn-sm{padding:.42em .8em;font-size:.86rem}
+.chip{font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;
+  border:1px solid var(--rule-2);padding:.18em .5em;border-radius:2px;color:var(--ink-2);
+  white-space:nowrap}
+.chip.go{background:var(--pine-soft);border-color:#b6cdc2;color:var(--pine)}
+.chip.cond{background:var(--amber-soft);border-color:#ddd0a8;color:var(--amber)}
+.chip.no{background:var(--paper-2);color:var(--ink-3)}
+.chip.demo{background:var(--slate-soft);border-color:#c3d2de;color:var(--slate)}
+
+/* ---------- 工具条（无障碍开关，真生效） ---------- */
+.toolbar{position:sticky;top:0;z-index:20;display:flex;gap:.5rem;align-items:center;
+  flex-wrap:wrap;padding:.6rem clamp(1.2rem,4vw,3.6rem);
+  background:rgba(246,244,238,.94);backdrop-filter:blur(6px);
+  border-bottom:1px solid var(--rule);margin:0 calc(-1*clamp(1.2rem,4vw,3.6rem))}
+.toolbar span.lbl{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-3);margin-right:.3rem}
+.toolbar button[aria-pressed="true"]{background:var(--pine);color:#fff;border-color:var(--pine)}
+
+/* ---------- 卡片与列表 ---------- */
+.stack{display:grid;gap:1px;background:var(--rule);border:1px solid var(--rule)}
+.stack>article{background:var(--paper);padding:1.5rem 1.6rem}
+.stack>article>h3{display:flex;gap:.8rem;align-items:baseline;flex-wrap:wrap}
+.disclose summary{cursor:pointer;list-style:none}
+.disclose summary::-webkit-details-marker{display:none}
+.disclose summary .more{font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--pine)}
+.disclose[open] summary .more::after{content:" ▲"}
+.disclose summary .more::after{content:" ▼"}
+.disclose .body{margin-top:1.1rem;padding-top:1.1rem;border-top:1px dashed var(--rule-2)}
+
+/* ---------- 表格 ---------- */
+.tbl-scroll{overflow-x:auto;border:1px solid var(--rule);background:var(--paper)}
+table{border-collapse:collapse;width:100%;font-size:.92rem;min-width:520px}
+caption{text-align:left;padding:.9rem 1rem .5rem;font-family:var(--serif);
+  font-size:var(--step-1);color:var(--ink)}
+th,td{padding:.7rem .9rem;border-bottom:1px solid var(--rule);vertical-align:top;
+  text-align:left;line-height:1.6}
+thead th{background:var(--paper-2);font-weight:600;font-size:.8rem;letter-spacing:.04em;
+  color:var(--ink-2);border-bottom:1px solid var(--rule-2);white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover{background:#fbfaf6}
+td .num{color:var(--ink-2)}
+.tbl-evidence td:first-child{white-space:nowrap}
+.tbl-evidence td .num{white-space:nowrap}
+
+/* ---------- 时间线 ---------- */
+.tl{list-style:none;margin:0;padding:0;border-left:1px solid var(--rule-2)}
+.tl>li{padding:0 0 1.4rem 1.5rem;position:relative}
+.tl>li::before{content:"";position:absolute;left:-5px;top:.55em;width:9px;height:9px;
+  background:var(--paper);border:1px solid var(--rule-2);border-radius:50%}
+.tl>li[data-day="1"]::before{border-color:var(--pine)}
+.tl>li[data-day="2"]::before{border-color:var(--slate)}
+.tl .when{font-family:var(--mono);font-size:.78rem;letter-spacing:.06em;color:var(--ink-3)}
+.tl h4{margin:.15em 0 .3em}
+.tl p{margin:0;font-size:.92rem;color:var(--ink-2)}
+.tl .who{display:inline-flex;gap:.4rem;margin-top:.4rem;flex-wrap:wrap}
+
+/* ---------- 原型 ---------- */
+.proto{border:1px solid var(--ink);background:var(--paper-2)}
+.proto-bar{display:flex;justify-content:space-between;align-items:center;gap:1rem;
+  padding:.8rem 1.1rem;border-bottom:1px solid var(--rule-2);background:var(--paper);
+  flex-wrap:wrap}
+.proto-bar .name{font-family:var(--serif);font-size:var(--step-1)}
+.proto-body{padding:1.4rem 1.5rem;display:grid;gap:1.2rem}
+.scenes{display:flex;gap:.5rem;flex-wrap:wrap}
+.scene-btn{background:transparent;border:1px solid var(--rule-2);padding:.5em .9em;
+  border-radius:2px;font-size:.9rem;color:var(--ink-2)}
+.scene-btn[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.stage{background:var(--paper);border:1px solid var(--rule);padding:1.3rem 1.4rem}
+.stage .scene-desc{font-size:.92rem;color:var(--ink-2);margin-bottom:1rem;
+  padding-bottom:.9rem;border-bottom:1px dashed var(--rule)}
+.line{display:grid;grid-template-columns:auto 1fr;gap:.8rem;margin:0 0 1rem;align-items:start}
+.line .who{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;
+  padding-top:.35em;color:var(--ink-3);min-width:3.4em}
+.line .say{background:var(--paper-2);border:1px solid var(--rule);padding:.7rem .9rem;
+  border-radius:2px;max-width:52ch}
+.line.them .say{background:var(--slate-soft);border-color:#cdd9e3}
+.opts{display:grid;gap:.6rem;margin-top:.4rem}
+.opt{text-align:left;background:var(--paper);border:1px solid var(--rule-2);
+  padding:.7rem .9rem;border-radius:2px;transition:border-color .2s var(--ease),background .2s var(--ease)}
+.opt:hover:not(:disabled){border-color:var(--ink);background:#fbfaf6}
+.opt:disabled{opacity:.42;cursor:default}
+.opt.picked{opacity:1;border-color:var(--ink);border-left:3px solid var(--pine);
+  background:var(--paper)}
+.opt.picked .tag::after{content:" · 你选的"}
+.opt .tag{font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;color:var(--ink-3);
+  display:block;margin-bottom:.25em}
+.feedback{border-left:3px solid var(--pine);background:var(--pine-soft);
+  padding:.9rem 1.1rem;font-size:.94rem}
+.feedback.warn{border-left-color:var(--clay);background:var(--clay-soft)}
+.tally{display:flex;gap:1.4rem;flex-wrap:wrap;font-size:.86rem;color:var(--ink-2);
+  border-top:1px dashed var(--rule);padding-top:.9rem}
+.tally b{font-family:var(--mono);font-size:1.05rem;color:var(--ink);display:block}
+.note{font-size:.84rem;color:var(--ink-3);line-height:1.6}
+
+/* ---------- 架构图 ---------- */
+.arch{display:grid;gap:1px;background:var(--rule);border:1px solid var(--rule);
+  grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.arch div{background:var(--paper);padding:1.1rem 1.2rem}
+.arch div h4{font-family:var(--mono);font-size:.74rem;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--pine);margin-bottom:.5em}
+.arch div p{margin:0;font-size:.88rem;color:var(--ink-2)}
+.arch div .flow{font-family:var(--mono);font-size:.78rem;color:var(--ink-3);margin-top:.5em}
+
+/* ---------- 引用块 / 诚实标注 ---------- */
+.callout{border:1px solid var(--rule-2);border-left:3px solid var(--amber);
+  background:var(--amber-soft);padding:1.1rem 1.3rem;margin:0 0 1.6rem}
+.callout h4{margin-bottom:.4em}
+.callout p:last-child{margin-bottom:0}
+.quote{font-family:var(--serif);font-size:var(--step-1);line-height:1.6;
+  border-left:3px solid var(--ink);padding:.2rem 0 .2rem 1.2rem;margin:0 0 1.6rem;max-width:52ch}
+.quote cite{display:block;font-family:var(--sans);font-size:.84rem;color:var(--ink-3);
+  font-style:normal;margin-top:.6em}
+
+/* ---------- 页脚 ---------- */
+footer{padding:3rem 0 0;border-top:1px solid var(--ink);display:grid;gap:1.4rem;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+footer .col p{font-size:.86rem;color:var(--ink-2);margin:0}
+footer .col .h{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink-3);margin-bottom:.5em}
+
+/* ---------- 滚动入场（可关） ---------- */
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.reveal{animation:rise .5s var(--ease) both}
+
+/* ---------- 响应式：窄屏重排优先级，不是等比缩小 ---------- */
+@media (max-width:760px){
+  .hero h1 br{display:none}
+  .hero h1{max-width:16ch}
+}
+@media (max-width:900px){
+  .shell{grid-template-columns:minmax(0,1fr)}
+  .rail{position:static;height:auto;border-right:0;border-bottom:1px solid var(--rule);
+    padding:1.2rem clamp(1.2rem,4vw,3.6rem);min-width:0}
+  .track{display:flex;gap:.4rem;overflow-x:auto;padding-bottom:.4rem;flex:none;min-width:0}
+  .track::before{display:none}
+  .track li{padding:.3rem .7rem;border:1px solid var(--rule);border-radius:2px;
+    margin:0;font-size:.76rem;flex:0 0 auto}
+  .track li::before{display:none}
+  .track li .t{display:inline;margin-right:.4em}
+  .rail .rail-foot{display:none}
+  main{padding-top:0}
+  .facts div{border-right:0;border-bottom:1px solid var(--rule);padding-right:0}
+  .toolbar .note{display:none}
+  .proto-body,.stage{padding:1rem 1.1rem}
+  .arch{grid-template-columns:minmax(0,1fr)}
+  .line{grid-template-columns:1fr}
+  .line .who{padding-top:0}
+}
+@media print{
+  :root{--paper:#fff}
+  body{font-size:10.5pt;line-height:1.55}
+  .rail,.toolbar,.cta-row,.scenes,.opts,.proto-bar .btns{display:none!important}
+  .shell{grid-template-columns:1fr;max-width:none}
+  main{padding:0}
+  section{padding:1.2rem 0;border-bottom:1px solid #ccc;break-inside:avoid}
+  .proto{border-color:#333}
+  .stage,.line .say{background:#fff}
+  a{color:#000;text-decoration:none}
+  .disclose{break-inside:avoid}
+  .disclose[open] summary{display:none}
+  .tbl-scroll{overflow:visible;border:0}
+  table{min-width:0;font-size:9pt}
+  th,td{padding:.35rem .45rem}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- 左侧：48 小时轨道，兼作章节导航 -->
+  <nav class="rail" aria-label="48 小时计划与章节导航">
+    <p class="rail-head">48h 时间轨道</p>
+    <ol class="track" id="track">
+      <li data-target="hero"><span class="t">H0</span><span class="l">开题与边界</span></li>
+      <li data-target="problem"><span class="t">H0–2</span><span class="l">问题与用户</span></li>
+      <li data-target="evidence"><span class="t">H2–4</span><span class="l">研究依据</span></li>
+      <li data-target="product"><span class="t">H4–16</span><span class="l">四个模块</span></li>
+      <li data-target="proto"><span class="t">H16–30</span><span class="l">可玩原型</span></li>
+      <li data-target="plan"><span class="t">H30–42</span><span class="l">排班与交付</span></li>
+      <li data-target="team"><span class="t">全程</span><span class="l">三人分工</span></li>
+      <li data-target="tech"><span class="t">H36–44</span><span class="l">架构与 API</span></li>
+      <li data-target="ethics"><span class="t">H8–46</span><span class="l">伦理与安全</span></li>
+      <li data-target="judging"><span class="t">H46–48</span><span class="l">评审对照</span></li>
+      <li data-target="risk"><span class="t">H44</span><span class="l">风险清单</span></li>
+      <li data-target="after"><span class="t">赛后</span><span class="l">三个月路线</span></li>
+      <li data-target="refs"><span class="t">H48</span><span class="l">引用清单</span></li>
+    </ol>
+    <p class="rail-foot">星桥 · 计划书 v1.1<br>2026-11-21 · 三人队</p>
+  </nav>
+
+  <main>
+    <div class="toolbar" role="group" aria-label="阅读设置">
+      <span class="lbl">阅读设置</span>
+      <button type="button" class="btn btn-ghost btn-sm" id="tg-motion" aria-pressed="false">关闭动效</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="tg-size" aria-pressed="false">大字号</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="tg-contrast" aria-pressed="false">高对比</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="tg-print">打印 / 存 PDF</button>
+      <span class="note" style="margin-left:auto">这三项就是产品本身的原则：安静、可控、可预测</span>
+    </div>
+
+    <!-- 首屏 -->
+    <section class="hero" id="hero">
+      <p class="kicker">Hackathon Proposal · 48 小时</p>
+      <h1>星桥：让自闭症青少年，<br>在<b>能反复重来</b>的地方练社会生活</h1>
+      <p class="sub">社交脚本模拟对话 · 情绪与情境判断练习<br>线下泛化任务 · 学习与情绪记录<br>
+        一个网页，接 API 就能跑，教师端浏览器打开即用。</p>
+      <div class="facts">
+        <div><span class="k">要解决的问题</span><span class="v">练的机会太少</span>
+          <span class="n">干预靠人工一对一，真实场景不可重复，回家没地方练</span></div>
+        <div><span class="k">48 小时交付</span><span class="v num">4 模块</span>
+          <span class="n">2 个做完整闭环，2 个做可用最小版</span></div>
+        <div><span class="k">团队</span><span class="v num">3 人</span>
+          <span class="n">前端 / 后端与数据 / 内容与审核</span></div>
+        <div><span class="k">现在就能试</span><span class="v">可玩原型</span>
+          <span class="n">本页内置真实交互脚本，不依赖网络</span></div>
+      </div>
+      <div class="cta-row">
+        <a class="btn" href="#proto">直接玩原型 ↓</a>
+        <a class="btn btn-ghost" href="#plan">看 48 小时排班</a>
+        <span class="chip cond">定位：练习与记录工具，不做诊断、不承诺改善核心症状</span>
+      </div>
+    </section>
+
+    <!-- 问题 -->
+    <section id="problem">
+      <div class="sec-head"><span class="idx num">01</span><h2>问题不是“不认识情绪”，是“没有练习场”</h2></div>
+      <div class="wrap">
+        <p class="lede">自闭症谱系障碍（ASD）青少年的核心困难之一，是把社交规则用到具体情境里。
+          这件事需要大量、重复、带反馈的练习。而现实是：练习机会集中在机构课时里，一周两三次，
+          每次几十分钟，而且场景固定。</p>
+        <div class="stack">
+          <article>
+            <h3>供给侧：人工引导不可复制</h3>
+            <p>特教老师、行为分析师、家长轮流承担引导角色。同一句“怎么开口借笔记”，
+              在不同人那里得到不同反馈，孩子学到的往往是“这一次怎么说”，而不是“这类场合怎么应对”。</p>
+          </article>
+          <article>
+            <h3>场景侧：真实社交有代价</h3>
+            <p>在真实场合失败一次，代价是关系、情绪和自信心。孩子因此回避，练习量进一步下降——
+              这是最需要被打破的循环。虚拟练习的价值不是“仿真”，而是<b>允许失败和重来</b>。</p>
+          </article>
+          <article>
+            <h3>记录侧：练过什么、卡在哪，没人记得</h3>
+            <p>家长凭印象，老师凭课堂观察，跨周对比几乎不可能。没有记录，就没有“上次会了、这次换个场景又不会”
+              这种最有价值的泛化信息。</p>
+          </article>
+        </div>
+        <h3 style="margin-top:2.4rem">三类用户，三种诉求</h3>
+        <div class="tbl-scroll">
+          <table>
+            <caption>用户与核心任务</caption>
+            <thead><tr><th>角色</th><th>他要完成的事</th><th>今天怎么做</th><th>星桥接管哪一段</th></tr></thead>
+            <tbody>
+              <tr><td>ASD 青少年（12–18 岁，能用语言表达）</td>
+                <td>在低风险环境反复练同一类场景，直到敢用</td>
+                <td>课堂角色扮演、家长临时教</td>
+                <td>随时可练的脚本对话 + 即时反馈 + 可回看记录</td></tr>
+              <tr><td>特教 / 资源教师</td>
+                <td>知道每个孩子卡在哪一类场景，安排下节课</td>
+                <td>课堂观察 + 纸质记录</td>
+                <td>班级练习概览、按场景聚合的错误分布、导出</td></tr>
+              <tr><td>家长</td>
+                <td>把学校教的搬到周末的超市、小区、亲戚家</td>
+                <td>口头提醒，做完就忘</td>
+                <td>泛化任务卡 + 打卡与情绪自评</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout">
+          <h4>关于数字的诚实说明</h4>
+          <p>本页刻意<b>不放</b>“我国 ASD 人数 ×× 万”“干预费用 ×× 元”这类数字。路演引用统计需要权威出处与年份，
+            我们还没做完这一步。需要引用时见 <a href="#refs">待核实清单</a>；
+            在此之前，我们的论证只依赖可直接观察的事实：练习机会稀缺、场景不可重复、记录缺失。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 研究依据 -->
+    <section id="evidence">
+      <div class="sec-head"><span class="idx num">02</span><h2>研究依据：先看证据，再决定做什么</h2></div>
+      <div class="wrap">
+        <p class="lede">这一节只放能在原文核对到的数字与结论。检索日期 2026-11-21，
+          来源为 PubMed 题录与摘要、ABIDE 官网；每条给 PMID 或 DOI，路演被追问时可当场查。</p>
+
+        <div class="callout">
+          <h4>三条会直接改变设计的结论</h4>
+          <p><b>一，不做诊断。</b>数字表型筛查的阳性预测值只有 40.6%（Nat Med 2023），
+            我们只做练习与记录。<br>
+            <b>二，不训练模型。</b>没有中文青少年社交脚本标注集，用未成年人数据训练还涉及单独同意与伦理审查；
+            两天内用「规则脚本 + 受约束 LLM」就够。<br>
+            <b>三，不把眼神接触当目标。</b>看眼睛的时长在婴儿期是逐渐下降的，不是一开始就缺失（Nature 2013）；
+            强迫注视既缺证据支持，也违背神经多样性立场。</p>
+        </div>
+
+        <h3>三个可以引用的规模数字</h3>
+        <div class="tbl-scroll">
+          <table class="tbl-evidence">
+            <caption>只写口径一致的数字</caption>
+            <thead><tr><th>指标</th><th>数字</th><th>口径与出处</th></tr></thead>
+            <tbody>
+              <tr><td>中国 6–12 岁 ASD 患病率</td><td><b>0.70%</b>（95% CI 0.64–0.74）</td>
+                <td>125,806 名儿童，多阶段整群抽样；实测 0.29%，按应答率校正。Neurosci Bull 2020. PMID 32607739</td></tr>
+              <tr><td>全球 3–18 岁 ASD 患病率</td><td><b>0.77%</b>（男孩 1.14%）</td>
+                <td>66 项研究，筛查 21,313,061 名儿童。Osong Public Health Res Perspect 2025. PMID 39933560</td></tr>
+              <tr><td>美国 8 岁儿童</td><td><b>1/36</b>（27.6‰）</td>
+                <td>ADDM 网络 11 站点，2020 年监测；最早诊断中位年龄 49 个月。MMWR 2023. PMID 36952288</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note" style="margin-top:.8rem">不混用口径：路演说中国就用 0.70%（6–12 岁校正估计），不拿美国的 1/36 冒充。</p>
+
+        <h3 style="margin-top:2.4rem">社交互动：八项会改变设计的发现</h3>
+        <div class="tbl-scroll">
+          <table class="tbl-evidence">
+            <caption>Nature / Science 系 · 行为与心理研究</caption>
+            <thead><tr><th>研究</th><th>发现</th><th>对产品的含义</th></tr></thead>
+            <tbody>
+              <tr><td><b>Nature</b> 2013<br><span class="num">PMID 24196715</span></td>
+                <td>后来确诊 ASD 的婴儿，2 个月时看眼睛的时长正常，2–6 个月逐渐下降</td>
+                <td>「不看眼睛」不是起点；不把注视时长当训练指标，更不惩罚回避</td></tr>
+              <tr><td><b>Nature</b> 2009<br><span class="num">PMID 19329996</span></td>
+                <td>2 岁 ASD 儿童不朝向生物运动，却对非社会的物理偶联高度敏感</td>
+                <td>社交线索不是天然奖赏；用「我点→立刻有反应」的可预测反馈建立动机</td></tr>
+              <tr><td><b>Nature</b> 2017<br><span class="num">PMID 28700580</span></td>
+                <td>338 名幼儿眼动：同卵双胞胎一致率 0.91，异卵 0.35；看眼/嘴区域高度可遗传</td>
+                <td>社交视觉参与是发育表型，不是态度问题；不做「注视排行榜」</td></tr>
+              <tr><td><b>Nat Hum Behav</b> 2025<br><span class="num">PMID 40369213</span></td>
+                <td>311 人扩散链：单一与混合神经类型链的信息传递无差异；公开诊断身份提升融洽度</td>
+                <td>不是孩子单方面缺陷；同时训练同伴如何接收，支持自愿披露</td></tr>
+              <tr><td><b>Nat Hum Behav</b> 2023<br><span class="num">PMID 37864080</span></td>
+                <td>自闭症人群心理健康挑战高发；支持应「神经多样性知情」</td>
+                <td>情绪自评、退出机制、转介路径是核心功能，不是附加项</td></tr>
+              <tr><td><b>Nat Commun</b> 2023<br><span class="num">PMID 37474575</span></td>
+                <td>社会推断的脑模式可预测真实社交网络规模与症状严重度</td>
+                <td>练「他为什么这么说」，不是背固定台词</td></tr>
+              <tr><td><b>Nat Neurosci</b> 2017<br><span class="num">PMID 28758996</span></td>
+                <td>ASD 成人高估环境变化性，对意外事件「惊讶不足」</td>
+                <td>界面高度可预测：下一步、还剩几轮、能否退出，全部提前可见</td></tr>
+              <tr><td><b>Nat Hum Behav</b> 2024<br><span class="num">PMID 39424962</span></td>
+                <td>180 项研究：神经发育障碍执行功能延迟 g=0.56；ASD 在任务切换上尤其弱</td>
+                <td>单轮短、切换有提示、不同时要求听+看+想+说</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top:2.4rem">青少年社交技能训练：效果量有多大</h3>
+        <div class="tbl-scroll">
+          <table class="tbl-evidence">
+            <caption>与 12–18 岁最接近的一组证据</caption>
+            <thead><tr><th>研究</th><th>样本</th><th>结果</th><th>怎么用</th></tr></thead>
+            <tbody>
+              <tr><td><b>JAMA Pediatr</b> 2021<br><span class="num">PMID 34661613</span></td>
+                <td>31 项 RCT、2,131 人，平均 10.8 岁（4–17 岁）</td>
+                <td>社交功能 <b>Hedges g=0.61</b>；社会认知 <b>g=0.67</b></td>
+                <td>最贴近本产品的效果量；但对照组类型会显著改变效应大小</td></tr>
+              <tr><td><b>J Affect Disord</b> 2024<br><span class="num">PMID 37802322</span></td>
+                <td>7 项 RCT、214 名儿童青少年</td>
+                <td>CBT 改善社交损害（SRS 指标）</td>
+                <td>借用「识别情绪→检验想法→行为实验」的结构</td></tr>
+              <tr><td><b>J Med Internet Res</b> 2025<br><span class="num">PMID 39907288</span></td>
+                <td>14 项 VR 研究</td>
+                <td>VR 对社交技能有正向作用；高功能 ASD 获益更大；有眩晕/感官过载风险</td>
+                <td>网页版做基础技能合理；复杂技能留给赛后</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note" style="margin-top:.8rem">口径提醒：青少年 RCT 数量远少于 8 岁以下；答辩说「有中等效应量的初步证据，高质量主动对照研究仍不足」，比说「已被验证有效」稳。</p>
+
+        <div class="callout" style="margin-top:2rem">
+          <h4>由此定下的产品立场</h4>
+          <p>不做「眼神接触训练器」，做「可预测的社交演练场 + 解读意图的脚手架 + 随时可退出的安全空间」。
+            每条脚本都保留「拒绝/离开」选项且不扣分；反馈说「这句话可能让对方以为……」，不说「你错了」。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 产品 -->
+    <section id="product">
+      <div class="sec-head"><span class="idx num">03</span><h2>四个模块，两个做透，两个做小</h2></div>
+      <div class="wrap">
+        <p class="lede">48 小时容不下“平台”。我们按“能不能现场演示、能不能说清价值”来砍：
+          模拟对话和练习记录做完整闭环，情绪练习和泛化任务做可用最小版。</p>
+        <div class="stack">
+          <details class="disclose" open>
+            <summary><article style="padding:0">
+              <h3>社交脚本模拟对话 <span class="chip go">48h 完整闭环</span> <span class="more">细节</span></h3>
+              <p style="margin:.6em 0 0;color:var(--ink-2)">分场景脚本树 + 可选 LLM 自由模式。每一回合给出“对方回应”与针对性反馈，
+                重点不是打分，而是让孩子看见<b>换一个说法，对方的反应会怎么变</b>。</p>
+            </article></summary>
+            <div class="body">
+              <ul>
+                <li><b>首批 6 个场景</b>：借笔记、被拒绝后的回应、撞到人的道歉、课堂提问、加入同学聊天、打电话请假。</li>
+                <li><b>回合结构</b>：情境说明 → 3 个候选说法（含 1 个“容易出问题”的真实选项）→ 对方回应 → 反馈与下一步提示。</li>
+                <li><b>脚本优先，LLM 兜底</b>：演示走本地脚本树（断网也能跑）；LLM 只在教师监护开关开启时用于自由追问。</li>
+                <li><b>反馈文案规则</b>：不评价人，只评价说法；不用否定性形容词；每次给“再试一次”和“换个说法”两条出路。</li>
+              </ul>
+              <p><b>验收标准：</b>任一场景能连续跑完 ≥5 回合，选择、回应、反馈、记录四步都在；断网可完整演示。</p>
+            </div>
+          </details>
+          <details class="disclose">
+            <summary><article style="padding:0">
+              <h3>学习与情绪记录 <span class="chip go">48h 完整闭环</span> <span class="more">细节</span></h3>
+              <p style="margin:.6em 0 0;color:var(--ink-2)">每次练习自动留痕：场景、回合、选择分布、耗时、当时情绪自评。
+                这是教师端和家长端唯一必需的数据来源。</p>
+            </article></summary>
+            <div class="body">
+              <ul>
+                <li>情绪自评用<b>五档图形量表</b>（很不安 → 很平静），不要求写文字，降低表达负担。</li>
+                <li>记录页只回答三个问题：练了什么、和上次比怎样、下次建议练什么。</li>
+                <li>导出 CSV / 打印视图，方便老师贴进个别化教育计划（IEP）材料。</li>
+                <li>记录默认<b>不含可识别信息</b>，演示用合成数据。</li>
+              </ul>
+              <p><b>验收标准：</b>完成一轮练习后，记录条目出现在列表与概览中，且能按场景聚合。</p>
+            </div>
+          </details>
+          <details class="disclose">
+            <summary><article style="padding:0">
+              <h3>情绪与情境判断练习 <span class="chip cond">48h 最小版</span> <span class="more">细节</span></h3>
+              <p style="margin:.6em 0 0;color:var(--ink-2)">刻意不做“读脸训练”。用<b>情境 + 线索</b>判断对方可能的感受，
+                练的是推断，不是辨认五官。</p>
+            </article></summary>
+            <div class="body">
+              <ul>
+                <li>题库 12–20 题：一段情境描述 + 4 个情绪选项 + 一句线索提示。</li>
+                <li>答错不弹红叉，只补一句“还有另一种可能：……”。</li>
+                <li>不用真人人脸照片：插画或文字情境，减少隐私与“被扫描”的不适。</li>
+                <li>可选的人脸情绪模型只作为辅助反馈，<b>不做身份识别、不存原图</b>。</li>
+              </ul>
+              <p><b>为什么这样设计：</b>ASD 情绪识别训练能否迁移到真实社交，文献结论并不一致。
+                我们不宣称“提高共情”，只记录“这类情境判断的正确率与反应时是否随练习变化”。</p>
+            </div>
+          </details>
+          <details class="disclose">
+            <summary><article style="padding:0">
+              <h3>泛化任务卡 <span class="chip cond">48h 最小版</span> <span class="more">细节</span></h3>
+              <p style="margin:.6em 0 0;color:var(--ink-2)">把线上练的那句话搬到线下用一次。这是产品价值的关键一跳，
+                但 48 小时里只做“发任务—打卡—回看”。</p>
+            </article></summary>
+            <div class="body">
+              <ul>
+                <li>教师从场景库一键下发，例如“本周在食堂向一位同学说一句话”。</li>
+                <li>打卡方式：一句话描述 + 情绪自评（不强制拍照，避免隐私与压力）。</li>
+                <li>记录页把“线上练了几次”和“线下用了几次”并排显示——这是我们最想给评委看的一张图。</li>
+              </ul>
+              <p><b>验收标准：</b>下发→打卡→并排展示三步可演示。</p>
+            </div>
+          </details>
+          <details class="disclose">
+            <summary><article style="padding:0">
+              <h3>明确不做 <span class="chip no">本期排除</span> <span class="more">为什么</span></h3>
+              <p style="margin:.6em 0 0;color:var(--ink-2)">砍掉的理由不是“没时间”，而是“不该由我们做”或“风险大于价值”。</p>
+            </article></summary>
+            <div class="body">
+              <ul>
+                <li><b>诊断与筛查量表结论</b>：没有临床资质与授权，不做任何“是否 ASD”“严重程度”输出。</li>
+                <li><b>无边界自由聊天</b>：面向未成年人的开放对话不可控，自由模式必须挂在教师监护开关下。</li>
+                <li><b>眼神接触训练</b>：把“看眼睛”当目标是错误的干预方向，我们不内置。</li>
+                <li><b>强激励与连续打卡惩罚</b>：不做断签提醒、排行榜、成瘾式奖励；奖励低刺激且可关闭。</li>
+                <li><b>多人房间 / 同伴演练</b>：需要教师在场才安全，放到赛后。</li>
+                <li><b>原生 App</b>：双端开发 + 上架审核 + 推送，三人两天做不完；网页 + PWA 足够。</li>
+              </ul>
+            </div>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- 原型 -->
+    <section id="proto" class="wide">
+      <div class="sec-head"><span class="idx num">04</span><h2>可玩原型：现在就能试一轮完整练习</h2></div>
+      <div class="wrap" style="max-width:none">
+        <p class="lede">下面不是截图，是真实交互。选一个场景，替孩子挑一句话，看对方怎么回应。
+          路演时这一步占 90 秒——评委自己点一次，比十页 PPT 有用。</p>
+      </div>
+      <div class="proto" id="proto-root">
+        <div class="proto-bar">
+          <p class="name">社交脚本练习 · 演示版</p>
+          <div class="btns" style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+            <span class="chip demo" id="proto-state">待开始</span>
+            <button type="button" class="btn btn-ghost btn-sm" id="proto-reset">重新开始</button>
+          </div>
+        </div>
+        <div class="proto-body">
+          <div class="scenes" role="group" aria-label="选择场景" id="scene-list"></div>
+          <div class="stage" id="stage" aria-live="polite"></div>
+          <div class="tally" id="tally" aria-label="本次练习小结"></div>
+        </div>
+      </div>
+      <div class="wrap" style="margin-top:1.6rem">
+        <p class="note">原型说明：脚本为本地数据，断网可用；LLM 自由追问在真实产品里位于后端，
+          由教师开关控制。反馈文案刻意避免“错了”“不好”这类对人的评价。</p>
+      </div>
+    </section>
+
+    <!-- 48 小时计划 -->
+    <section id="plan">
+      <div class="sec-head"><span class="idx num">05</span><h2>48 小时怎么过：以“可演示”为唯一单位</h2></div>
+      <div class="wrap">
+        <p class="lede">按两个自然日、每天有效 12 小时排。每 4 小时有一个“能打开看”的东西，
+          通不过就当场砍功能，不留到晚上。</p>
+        <div class="tbl-scroll">
+          <table>
+            <caption>时段与交付物</caption>
+            <thead><tr><th>时段</th><th>交付物</th><th>主责</th><th>不通过怎么办</th></tr></thead>
+            <tbody>
+              <tr><td class="num">D1 0–2h</td><td>边界确认：6 个场景清单、反馈文案规则、“不做”清单签字</td><td>内容 C</td>
+                <td>场景砍到 4 个</td></tr>
+              <tr><td class="num">D1 2–6h</td><td>骨架跑通：前端路由 + 后端最小 API（场景列表 / 提交回合 / 记录）</td><td>前端 A + 后端 B</td>
+                <td>先本地 JSON，接口形状不变</td></tr>
+              <tr><td class="num">D1 6–10h</td><td>脚本树引擎 + 回合反馈渲染，1 个场景完整可玩</td><td>前端 A</td>
+                <td>先做单场景，其余复用同结构</td></tr>
+              <tr><td class="num">D1 10–14h</td><td>记录落库 + 记录页 + 按场景聚合概览</td><td>后端 B</td>
+                <td>聚合只保留“场景 × 选择分布”</td></tr>
+              <tr><td class="num">D1 14–18h</td><td>情绪情境题 12 道 + 审核词表与拦截（本地生效）</td><td>内容 C + 后端 B</td>
+                <td>题库降到 8 道</td></tr>
+              <tr><td class="num">D1 18–22h</td><td>检查点①：一轮练习从选场景到出记录全程无断点</td><td>三人</td>
+                <td>砍泛化任务卡，保记录</td></tr>
+              <tr><td class="num">D1 22–24h</td><td>提交脚本与场景数据规范文档，锁版本</td><td>内容 C</td><td>—</td></tr>
+              <tr><td class="num">D2 0–4h</td><td>泛化任务卡：下发 → 打卡 → 线上/线下并排展示</td><td>前端 A</td>
+                <td>并排展示用静态数据</td></tr>
+              <tr><td class="num">D2 4–8h</td><td>教师/家长视图（班级概览 + 单人详情 + 导出 CSV）</td><td>后端 B + 前端 A</td>
+                <td>导出先做 CSV，PDF 打印视图代替</td></tr>
+              <tr><td class="num">D2 8–12h</td><td>LLM 接入与可插拔 Provider：脚本兜底 + 自由追问（监护开关）</td><td>后端 B</td>
+                <td>断网演示路径必须先保住</td></tr>
+              <tr><td class="num">D2 12–16h</td><td>检查点②：全流程 + 断网 + 移动端三套演示都跑一遍</td><td>三人</td>
+                <td>录一段备用屏录</td></tr>
+              <tr><td class="num">D2 16–20h</td><td>无障碍与降噪：键盘可操作、动效可关、字号、对比度、无自动播放</td><td>前端 A</td>
+                <td>优先保键盘与对比度</td></tr>
+              <tr><td class="num">D2 20–22h</td><td>部署 + OpenAPI 文档 + README + 合成数据集</td><td>后端 B</td>
+                <td>本地起服务演示亦可</td></tr>
+              <tr><td class="num">D2 22–24h</td><td>路演彩排：5 分钟脚本 + 3 分钟问答（伦理问题必练）</td><td>内容 C 主讲</td>
+                <td>砍问答练习，保一次完整计时</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3 style="margin-top:2.4rem">演示脚本（5 分钟）</h3>
+        <ol class="tl">
+          <li data-day="1"><span class="when">00:00–00:30</span><h4>一句痛点</h4>
+            <p>“同一句『能把笔记借我吗』，孩子一周只练得到两次。我们让它能练五十次。”</p></li>
+          <li data-day="1"><span class="when">00:30–02:00</span><h4>现场玩一轮</h4>
+            <p>评委或队员选“被拒绝后的回应”，故意挑一个会出问题的说法，让对方真的冷淡回应，再看反馈与重来。</p></li>
+          <li data-day="1"><span class="when">02:00–02:45</span><h4>记录与教师视图</h4>
+            <p>同一屏切到记录页：这周练了 4 个场景、在“加入聊天”上反复卡住。</p></li>
+          <li data-day="1"><span class="when">02:45–03:30</span><h4>泛化任务卡</h4>
+            <p>线上练 6 次 vs 线下用 1 次，并排显示——说明我们清楚线上不等于会了。</p></li>
+          <li data-day="2"><span class="when">03:30–04:15</span><h4>安全与边界</h4>
+            <p>主动交代：不做诊断、自由聊天挂监护开关、不采集人脸、演示数据全为合成。</p></li>
+          <li data-day="2"><span class="when">04:15–05:00</span><h4>赛后三个月</h4>
+            <p>与一家特教机构做 4 周小样本试用，把“泛化达成率”变成真数据。</p></li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- 分工 -->
+    <section id="team">
+      <div class="sec-head"><span class="idx num">06</span><h2>三人分工：一人一条主线，交叉处写文档</h2></div>
+      <div class="wrap">
+        <div class="stack">
+          <article>
+            <h3>A · 前端与体验 <span class="chip demo">网页</span></h3>
+            <p><b>负责：</b>页面结构与交互、脚本树渲染引擎、无障碍与感官友好设置、教师/家长视图界面、路演页面本身。</p>
+            <p><b>交付：</b>学生端 4 屏 + 教师端 2 屏 + 可访问性检查表（键盘、对比度、动效可关、无自动播放）。</p>
+            <p><b>不做：</b>不碰数据库迁移、不决定内容文案（由 C 定）。</p>
+          </article>
+          <article>
+            <h3>B · 后端与数据 <span class="chip demo">API</span></h3>
+            <p><b>负责：</b>API 与数据模型、Provider 抽象（对话 / 可选情绪模型）、记录与聚合、导出、部署与限流。</p>
+            <p><b>交付：</b>OpenAPI 文档 + 可替换的 AI 接入层 + 合成数据集 + 一键启动脚本。</p>
+            <p><b>不做：</b>不自己写场景脚本；不在未确认前接入任何采集人脸的能力。</p>
+          </article>
+          <article>
+            <h3>C · 内容、审核与对外 <span class="chip demo">质控</span></h3>
+            <p><b>负责：</b>场景脚本与题库撰写、反馈文案规则、审核队列与拦截词表、知情同意与隐私说明、
+              特教老师咨询对接、路演主讲与问答。</p>
+            <p><b>交付：</b>脚本规范（JSON Schema）+ 6 个场景 + 12 道情境题 + 审核记录表 + 讲稿。</p>
+            <p><b>不做：</b>不写业务代码，只在内容层用结构化数据提交。</p>
+          </article>
+        </div>
+        <div class="callout" style="margin-top:2rem">
+          <h4>交叉规则（避免三天后互相卡住）</h4>
+          <ul style="margin-bottom:0">
+            <li>数据格式先定后写：C 提交脚本 JSON，A/B 都不改字段含义，只加校验。</li>
+            <li>每 4 小时一次 10 分钟对齐，只讲“能不能演示”，不讲进度百分比。</li>
+            <li>每个关键模块至少两人看过；单点风险最高的记录聚合逻辑由 B 写、A 复核。</li>
+            <li>砍功能的决定权在检查点会议，不在个人。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 技术 -->
+    <section id="tech">
+      <div class="sec-head"><span class="idx num">07</span><h2>架构：网页优先，AI 能力可换供应商</h2></div>
+      <div class="wrap">
+        <div class="arch">
+          <div><h4>学生端 · 网页</h4>
+            <p>响应式 + PWA，平板优先。无自动播放、动效可关、字号与对比度可调。</p>
+            <p class="flow">脚本树本地渲染 → 提交回合</p></div>
+          <div><h4>教师 / 家长端</h4>
+            <p>同一套 API 的另一组视图：班级概览、任务下发、记录导出、监护开关。</p>
+            <p class="flow">读聚合接口 → 导出 CSV</p></div>
+          <div><h4>API 服务</h4>
+            <p>REST + OpenAPI；鉴权分机构密钥与个人会话；限流与配额；审计日志。</p>
+            <p class="flow">/scenes /sessions /records /tasks /reports</p></div>
+          <div><h4>Provider 抽象层</h4>
+            <p>对话、可选情绪识别、TTS/ASR 各一个内部接口，供应商可换、可降级到本地脚本。</p>
+            <p class="flow">LLM ⇄ 本地脚本兜底</p></div>
+          <div><h4>内容库</h4>
+            <p>场景与题库为版本化 JSON/YAML，改动走审核流程（PR + 人工复核）。</p>
+            <p class="flow">schema → 校验 → 灰度</p></div>
+          <div><h4>数据与记录</h4>
+            <p>SQLite 起步，PostgreSQL 收尾。默认去标识，敏感字段不采集。</p>
+            <p class="flow">PracticeSession / TurnRecord / MoodLog</p></div>
+        </div>
+
+        <h3 style="margin-top:2.4rem">为什么是网页，不是软件（App）</h3>
+        <div class="tbl-scroll">
+          <table>
+            <caption>两天周期下的成本对比</caption>
+            <thead><tr><th>维度</th><th>网页（我们的选择）</th><th>原生 App</th></tr></thead>
+            <tbody>
+              <tr><td>开发量</td><td>一套代码，桌面/平板/手机通吃</td><td>双端两套 UI，两天做不完</td></tr>
+              <tr><td>分发</td><td>发个链接，评委和机构当场能打开</td><td>上架审核周期以周计，演示拿不到</td></tr>
+              <tr><td>迭代</td><td>改文案改脚本刷新即生效</td><td>每次改动走构建与审核</td></tr>
+              <tr><td>离线</td><td>PWA 缓存脚本，断网可演示</td><td>原生离线更强，但我们不需要</td></tr>
+              <tr><td>能力需求</td><td>文字 + 图片 + 可选语音，网页足够</td><td>只有需要后台定位/相机常驻时才值</td></tr>
+              <tr><td>结论</td><td colspan="2"><b>网页 + PWA。</b>真要用 App 形态，赛后用 Capacitor 包一层即可，架构不变。</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top:2.4rem">要不要专门训练一个模型？</h3>
+        <p>不训练。三个理由同时成立：没有中文青少年社交脚本标注集；用未成年人敏感数据训练模型要走监护人单独同意与伦理审查，两天做不完；证据也不支持——技术类干预的效应量只有 g=0.33，真正起作用的是结构化练习与成人反馈，不是模型规模。</p>
+        <div class="tbl-scroll">
+          <table>
+            <caption>三种做法，只选一种</caption>
+            <thead><tr><th>方案</th><th>两天内能否交付</th><th>主要风险</th><th>结论</th></tr></thead>
+            <tbody>
+              <tr><td>纯规则脚本树</td><td>能</td><td>表达略生硬，但完全可测、可离线</td><td>作为主路径保留</td></tr>
+              <tr><td>规则 + 受约束 LLM</td><td>能</td><td>需输出校验与超时降级</td><td><b>选它</b></td></tr>
+              <tr><td>微调 / 自训模型</td><td>不能</td><td>无数据、伦理审查、算力与记忆风险</td><td>不做</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note" style="margin-top:.8rem">LLM 只做两件事：把审核过的脚本改写得更自然；把孩子的自由输入归类到已有选项。不让它自由生成反馈。API Key 只放服务端环境变量，前端永远拿不到；超时或限流自动回落到规则层。</p>
+
+        <h3 style="margin-top:2.4rem">阿里云免费服务器怎么放</h3>
+        <div class="arch">
+          <div><h4>入口层</h4><p>Nginx 反代 + 免费 HTTPS 证书；静态前端直接托管，演示可离线。</p><p class="flow">443 → /api 反代</p></div>
+          <div><h4>应用层</h4><p>FastAPI + Uvicorn，单进程足够；/health、限流、请求日志脱敏。</p><p class="flow">2C2G 内存占用 &lt; 500MB</p></div>
+          <div><h4>数据层</h4><p>SQLite 起步；每日备份到 OSS；审核后台 /admin 用一次性口令 + IP 白名单。</p><p class="flow">backup → OSS</p></div>
+        </div>
+        <p class="note" style="margin-top:.8rem">免费试用/学生机通常是 2 核 2G 级别，具体以实际领到的实例为准。这台机器不做微调、向量库集群、实时音视频转码——扛不住，也没必要。</p>
+
+        <h3 style="margin-top:2.4rem">API 草案（可对外接入）</h3>
+        <div class="tbl-scroll">
+          <table>
+            <caption>核心端点</caption>
+            <thead><tr><th>方法 / 路径</th><th>用途</th><th>关键字段</th></tr></thead>
+            <tbody>
+              <tr><td><code>GET /api/v1/scenes</code></td><td>取场景列表（按难度分级）</td><td><code>level</code>,<code>tag</code></td></tr>
+              <tr><td><code>POST /api/v1/sessions</code></td><td>开始一轮练习</td><td><code>sceneId</code> → <code>sessionId</code></td></tr>
+              <tr><td><code>POST /api/v1/sessions/{id}/turns</code></td><td>提交一次选择或自由文本</td><td>→ <code>reply</code>,<code>feedback</code>,<code>nextHints</code></td></tr>
+              <tr><td><code>POST /api/v1/emotion/quiz/submit</code></td><td>情境判断题作答</td><td><code>itemId</code>,<code>choice</code>,<code>rtMs</code></td></tr>
+              <tr><td><code>POST /api/v1/tasks/{id}/checkin</code></td><td>线下泛化任务打卡</td><td><code>note</code>,<code>mood</code>（不要求图片）</td></tr>
+              <tr><td><code>GET /api/v1/reports/student/{id}</code></td><td>单人记录与聚合</td><td><code>from</code>,<code>to</code>,<code>format=csv</code></td></tr>
+              <tr><td><code>POST /api/v1/moderation/review</code></td><td>内容审核队列处理</td><td><code>itemId</code>,<code>decision</code>,<code>reason</code></td></tr>
+              <tr><td><code>POST /api/v1/consent</code> / <code>DELETE /api/v1/subject</code></td><td>同意记录 / 撤回并删除</td><td>撤回后 24h 内物理删除</td></tr>
+              <tr><td><code>WEBHOOK onSessionCompleted</code></td><td>推给学校系统或研究用（脱敏）</td><td>需机构侧白名单</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note" style="margin-top:1rem">鉴权：机构侧 OAuth2 client credentials，个人侧会话 JWT；所有外部接入按密钥分环境，带限流与调用审计。</p>
+      </div>
+    </section>
+
+    <!-- 伦理 -->
+    <section id="ethics">
+      <div class="sec-head"><span class="idx num">08</span><h2>伦理不是附录，是这个产品能不能存在的前提</h2></div>
+      <div class="wrap">
+        <div class="quote">“我们做的东西面向一群无法完全自主表达同意的未成年人。
+          如果隐私和措辞没想清楚，功能做得越好，伤害越有效率。”
+          <cite>队内讨论共识，写进开发规则：任何采集字段的新增，需 C 复核用途与保留期</cite></div>
+        <div class="stack">
+          <article>
+            <h3>同意与撤回</h3>
+            <p>监护人书面同意 + 学生本人适龄说明（能看懂的一页版）。同意记录独立成表，
+              撤回即触发删除，删除有日志可查。黑客松阶段<b>只用合成数据</b>，不接触任何真实用户数据。</p>
+          </article>
+          <article>
+            <h3>数据最小化</h3>
+            <ul style="margin-bottom:0">
+              <li>不采集人脸、不采集精确位置、不采集录音原件（语音功能若做，只留转写文本）。</li>
+              <li>练习文本去标识后存储；姓名与标识符分离保存。</li>
+              <li>不接第三方广告与分析 SDK；导出只给教师/家长，不给平台方留长期副本。</li>
+            </ul>
+          </article>
+          <article>
+            <h3>内容安全</h3>
+            <p>三重限制：场景白名单 → 输出模板约束 → 敏感词与话题拦截。
+              自伤、被欺凌、求助类关键词触发时<b>停止生成</b>，改为展示求助指引并通知监护人/教师（预设话术，不做判断）。</p>
+          </article>
+          <article>
+            <h3>措辞与立场</h3>
+            <p>统一使用“自闭症谱系障碍 / ASD”“神经多样性”，不用“患者”“缺陷”“治愈”。
+              产品目标是让孩子在社交场合更从容，<b>不是把孩子训练得像非自闭症的人</b>。
+              界面不强制眼神接触、不惩罚回避、奖励可关闭。</p>
+          </article>
+          <article>
+            <h3>人工审核</h3>
+            <p>新场景、新题、提示词变更一律进审核队列，由 C 复核后灰度上线；
+              审核记录可追溯，出错内容能一键回滚。这是“审核”这条分工线存在的理由。</p>
+          </article>
+          <article>
+            <h3>合规与研究</h3>
+            <p>依《个人信息保护法》《未成年人保护法》《数据安全法》执行；
+              若后续用于研究或采集效果数据，需学校伦理审查与数据使用协议，量表使用需授权。相关条文与版权待逐条核实。</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 评审对照 -->
+    <section id="judging">
+      <div class="sec-head"><span class="idx num">09</span><h2>对着评分表写计划：我们打算在哪一项上赢</h2></div>
+      <div class="wrap">
+        <div class="tbl-scroll">
+          <table>
+            <caption>常见黑客松评分维度与我们的应对</caption>
+            <thead><tr><th>维度</th><th>评委真实在问什么</th><th>我们的答案</th><th>强度自评</th></tr></thead>
+            <tbody>
+              <tr><td>问题真实性</td><td>这是不是你臆想的需求？</td>
+                <td>来自可直接观察的事实：练习频次低、场景不可重复、无记录。赛后与特教机构对接补一手访谈</td><td><span class="chip cond">中</span></td></tr>
+              <tr><td>方案独特性</td><td>和现成的社交故事 App 有何不同？</td>
+                <td>差异在“线上练习 ↔ 线下泛化”的并排闭环与教师侧记录，而不是又一个情绪认知训练</td><td><span class="chip go">较强</span></td></tr>
+              <tr><td>完成度</td><td>能不能真跑起来？</td>
+                <td>两个模块完整闭环，断网可演示，评委现场可操作</td><td><span class="chip go">强</span></td></tr>
+              <tr><td>技术深度</td><td>是不是只调了个 API？</td>
+                <td>Provider 抽象 + 脚本/生成双通道 + 监护开关 + 审核队列；技术不是最炫，但工程判断清楚</td><td><span class="chip cond">中</span></td></tr>
+              <tr><td>社会价值</td><td>对弱势群体是否尊重？</td>
+                <td>主动交代不做诊断、不采人脸、不用“治愈”叙事、不强制眼神接触</td><td><span class="chip go">强</span></td></tr>
+              <tr><td>可落地性</td><td>赛后会不会死掉？</td>
+                <td>网页 + 文档 + 合成数据集交给机构即可继续；三个月路线明确</td><td><span class="chip go">较强</span></td></tr>
+              <tr><td>演示表现</td><td>5 分钟讲清楚了吗？</td>
+                <td>让评委亲手点一次“被拒绝后怎么说”，比讲十页有效</td><td><span class="chip go">强</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout" style="margin-top:2rem">
+          <h4>我们知道自己最弱的一项</h4>
+          <p>问题真实性目前靠常识推理支撑，缺一手数据。两天内无法补齐，所以演示时明确说“这是待验证假设”，
+            并把它变成赛后第一个动作（5 位特教老师 + 5 位家长访谈）。宁可承认缺口，不编数字。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 风险 -->
+    <section id="risk">
+      <div class="sec-head"><span class="idx num">10</span><h2>风险清单：按“会不会毁掉演示”排序</h2></div>
+      <div class="wrap">
+        <div class="tbl-scroll">
+          <table>
+            <caption>风险、信号与应对</caption>
+            <thead><tr><th>风险</th><th>出现信号</th><th>应对</th><th>责任</th></tr></thead>
+            <tbody>
+              <tr><td>现场断网 / API 不可用</td><td>依赖外部服务做核心演示</td>
+                <td>脚本树本地运行，LLM 只做增强；备一段屏录</td><td>B</td></tr>
+              <tr><td>LLM 输出不可控</td><td>自由模式出现不当内容</td>
+                <td>白名单 + 模板 + 拦截词；自由模式默认关闭，需教师开关</td><td>C + B</td></tr>
+              <tr><td>功能贪多导致全线半成品</td><td>D1 晚 22h 检查点①未通过</td>
+                <td>当场砍泛化任务卡与情绪题库，保“练习—记录”闭环</td><td>三人会议</td></tr>
+              <tr><td>内容不真实，被质疑“你们凭什么设计这些场景”</td><td>脚本像正常人写的对白</td>
+                <td>请 1 名特教老师做内容顾问（赛前线上确认 1 次），脚本共创；演示时说明来源</td><td>C</td></tr>
+              <tr><td>无障碍只是口号</td><td>只有键盘一项能用</td>
+                <td>D2 16–20h 专做检查表：键盘、对比度、动效、字号、读屏语义</td><td>A</td></tr>
+              <tr><td>隐私事故</td><td>有人上传真实孩子照片试功能</td>
+                <td>演示环境关闭上传，只用合成数据；现场明确声明</td><td>三人</td></tr>
+              <tr><td>队内时间不齐</td><td>某时段无人交付</td>
+                <td>每 4h 对齐；任何时段留“降级交付”选项</td><td>A/B/C</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 赛后 -->
+    <section id="after">
+      <div class="sec-head"><span class="idx num">11</span><h2>赛后三个月：从演示品变成有人用的东西</h2></div>
+      <div class="wrap">
+        <ol class="tl">
+          <li data-day="1"><span class="when">第 1–2 周</span><h4>一手需求验证</h4>
+            <p>访谈 5 位特教老师 + 5 位家长，重写脚本；确认“泛化任务卡”是否真是关键一跳。</p>
+            <div class="who"><span class="chip">C 主责</span><span class="chip cond">产出：访谈记录与脚本 v2</span></div></li>
+          <li data-day="1"><span class="when">第 3–4 周</span><h4>机构小试用（1 个班级，4 周）</h4>
+            <p>签数据使用与同意书，只留练习与情绪自评记录；教师每周给一次真实场景使用评定。</p>
+            <div class="who"><span class="chip">B 部署</span><span class="chip">A 教师视图</span></div></li>
+          <li data-day="2"><span class="when">第 5–8 周</span><h4>把“泛化达成率”变成真指标</h4>
+            <p>定义口径：同一场景线上练习次数 vs 线下任务卡达成率；看是否随练习上升。</p>
+            <div class="who"><span class="chip cond">这是产品能否继续的核心证据</span></div></li>
+          <li data-day="2"><span class="when">第 9–12 周</span><h4>难度自适应与语音输入</h4>
+            <p>部分孩子书写吃力，语音输入优先级高于自适应；多人房间必须有教师在场机制才做。</p>
+            <div class="who"><span class="chip">A + B</span></div></li>
+        </ol>
+        <h3 style="margin-top:2.4rem">指标口径（先写清，避免赛后自吹）</h3>
+        <ul>
+          <li><b>使用侧：</b>周练习次数、单场景复练率、平均时长。</li>
+          <li><b>学习侧：</b>回合目标达成率、情境判断正确率与反应时、跨场景迁移表现。</li>
+          <li><b>泛化侧：</b>任务卡完成率、教师评定的真实场景使用次数（1–5）。</li>
+          <li><b>体验侧：</b>感官负荷主观评分、“愿意继续用”评分、家长/教师满意度。</li>
+          <li><b>安全侧：</b>审核拦截数、误放行数（目标 0）、危机提示响应时长。</li>
+          <li><b>不宣称：</b>核心症状改善——无临床验证与授权，不做这个结论。</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 待核实 -->
+    <section id="refs">
+      <div class="sec-head"><span class="idx num">12</span><h2>待核实清单：路演前必须落实的引用</h2></div>
+      <div class="wrap">
+        <p class="lede">计划书里刻意留白的地方，逐条给出应查来源。查不到就不放，不写“据统计”。</p>
+        <div class="tbl-scroll">
+          <table>
+            <caption>需要补的出处</caption>
+            <thead><tr><th>条目</th><th>建议来源</th><th>状态</th></tr></thead>
+            <tbody>
+              <tr><td>我国 ASD 青少年规模与康复资源分布</td>
+                <td>患病率已有：6–12 岁校正 0.70%（Neurosci Bull 2020, PMID 32607739）；青少年分段与康复资源分布仍缺</td><td><span class="chip cond">部分已核</span></td></tr>
+              <tr><td>ASD 社交困难及其训练迁移效果</td>
+                <td>已有初步证据：4–17 岁社交功能 g=0.61、社会认知 g=0.67（JAMA Pediatr 2021, PMID 34661613）；迁移证据仍弱</td><td><span class="chip cond">部分已核</span></td></tr>
+              <tr><td>社交脚本教学（social scripts）作为干预手段的证据</td>
+                <td>Project AIM：技术类干预对社交沟通 g=0.33、NDBI 0.35（BMJ 2023, PMID 37963634）；社交脚本作为独立成分的高质量 RCT 仍少</td><td><span class="chip cond">部分已核</span></td></tr>
+              <tr><td>未成年人个人信息处理规则</td>
+                <td>《个人信息保护法》《未成年人保护法》及配套的儿童个人信息网络保护规定，逐条核对条文号</td><td><span class="chip cond">待核</span></td></tr>
+              <tr><td>如使用社交能力量表（如 SRS-2 等）</td>
+                <td>量表版权方授权与使用条件</td><td><span class="chip no">未获授权前不使用</span></td></tr>
+              <tr><td>机构合作与试用伦理审查</td>
+                <td>学校/机构伦理审查流程、数据使用协议模板</td><td><span class="chip cond">待联系</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top:2.4rem">已核实文献（节选）</h3>
+        <p class="note" style="margin-bottom:.8rem">完整版含 25 条题录与「未核实」清单，见同目录《星桥_文献与数据底稿_20261121.md》。</p>
+        <ol style="font-size:.88rem;color:var(--ink-2);line-height:1.7">
+          <li>Zhou H, et al. Prevalence of ASD in China: A Nationwide Multi-center Population-based Study Among Children Aged 6 to 12 Years. Neurosci Bull. 2020;36(9):961–971. PMID 32607739.</li>
+          <li>Issac A, et al. The global prevalence of ASD in children: a systematic review and meta-analysis. Osong Public Health Res Perspect. 2025;16(1):3–27. PMID 39933560.</li>
+          <li>Maenner MJ, et al. Prevalence and Characteristics of ASD Among Children Aged 8 Years — ADDM Network, 2020. MMWR Surveill Summ. 2023;72(2):1–14. PMID 36952288.</li>
+          <li>Jones W, Klin A. Attention to eyes is present but in decline in 2–6-month-old infants later diagnosed with autism. Nature. 2013;504:427–431. PMID 24196715.</li>
+          <li>Klin A, et al. Two-year-olds with autism orient to non-social contingencies rather than biological motion. Nature. 2009;459:257–261. PMID 19329996.</li>
+          <li>Crompton CJ, et al. Information transfer within and between autistic and non-autistic people. Nat Hum Behav. 2025;9:1488–1500. PMID 40369213.</li>
+          <li>Sandbank M, et al. Autism intervention meta-analysis of early childhood studies (Project AIM). BMJ. 2023;383:e076733. PMID 37963634.</li>
+          <li>Darling SJ, et al. Behavioral Intervention for Social Challenges in Children and Adolescents: A Systematic Review and Meta-analysis. JAMA Pediatr. 2021;175(12):e213982. PMID 34661613.</li>
+          <li>Perochon S, et al. Early detection of autism using digital behavioral phenotyping. Nat Med. 2023;29:2489–2497. PMID 37783967.</li>
+          <li>Di Martino A, et al. ABIDE I / ABIDE II. INDI &amp; NITRC. http://fcon_1000.projects.nitrc.org/indi/abide/ （非商业研究，需注册）</li>
+        </ol>
+      </div>
+    </section>
+
+    <footer>
+      <div class="col"><p class="h">项目</p><p>星桥 · 自闭症青少年社会生活练习与记录平台<br>黑客松 48 小时计划 v1.1</p></div>
+      <div class="col"><p class="h">团队</p><p>A 前端与体验<br>B 后端与数据<br>C 内容、审核与对外</p></div>
+      <div class="col"><p class="h">本页说明</p><p>计划书与原型合一，可离线打开、可打印为 PDF。原型数据为本地脚本与合成数据，不含任何真实用户信息。</p></div>
+      <div class="col"><p class="h">日期</p><p>2026-11-21</p></div>
+    </footer>
+  </main>
+</div>
+
+<script>
+/* ================= 原型数据：社交脚本树 ================= */
+const SCENES = [
+  {
+    id:"borrow",
+    title:"向同学借今天落下的笔记",
+    desc:"课间，同桌在收拾书包。你今天请假没来，想借他的笔记抄一下。",
+    turns:[
+      {
+        them:"（正在把课本塞进书包）",
+        prompt:"第一句怎么说？",
+        opts:[
+          {tag:"A",say:"能把今天的笔记借我抄一下吗？我昨天请假没来。",
+           reply:"哦可以啊，我放学前给你。",
+           fb:"说清了两件事：要什么、为什么。对方知道该做什么，这类开头最省事。",kind:"ok"},
+          {tag:"B",say:"（等他先开口，再找机会说）",
+           reply:"（他没注意到你，走了。）",
+           fb:"等对方先开口，多数时候不会发生。直接说是更难但更有效的一步。",kind:"warn"},
+          {tag:"C",say:"给我笔记。",
+           reply:"……你自己没记吗？",
+           fb:"只说要求、不说原因，容易被读成命令。对方回应冷淡不是因为你不好，是信息不够。",kind:"warn"}
+        ]
+      },
+      {
+        them:"哦可以啊，我放学前给你。",
+        prompt:"接下来？",
+        opts:[
+          {tag:"A",say:"谢谢。三点二十我在教室等你，大概二十分钟能抄完。",
+           reply:"行，那到时候一起。",
+           fb:"给出时间和长度，把模糊承诺变成具体安排——这是很多人漏掉的一步。",kind:"ok"},
+          {tag:"B",say:"那我现在就要。",
+           reply:"我在收拾东西啊……",
+           fb:"忽略对方当下的处境，容易让已经同意的合作变紧张。",kind:"warn"},
+          {tag:"C",say:"（不说什么，先回自己座位）",
+           reply:"（放学时他忘了，直接走了。）",
+           fb:"不确认时间地点，约定就只在你脑子里存在。",kind:"warn"}
+        ]
+      },
+      {
+        them:"（放学时他正在和别人聊天）",
+        prompt:"要不要打断？怎么说？",
+        opts:[
+          {tag:"A",say:"（等一下，等他聊完再走过去）",
+           reply:"啊笔记！差点忘了，给你。",
+           fb:"等一个空档，比插进去更省力，也更像成年人处理事情的方式。",kind:"ok"},
+          {tag:"B",say:"（走过去拍他肩膀）喂。",
+           reply:"等一下不行吗？",
+           fb:"打断别人的谈话容易被理解为不礼貌。等 30 秒通常更划算。",kind:"warn"},
+          {tag:"C",say:"不好意思打扰一下，我来拿笔记，两分钟就好。",
+           reply:"哦好，马上给你。",
+           fb:"先道歉 + 说明时长，是打断别人的标准做法。这条也算通过。",kind:"ok"}
+        ]
+      }
+    ]
+  },
+  {
+    id:"rejected",
+    title:"被拒绝之后怎么回应",
+    desc:"你想借笔记，同学说“今天我自己要用”。练习的重点就在被拒绝后的那一句话。",
+    turns:[
+      {
+        them:"今天不行，我自己要用。",
+        prompt:"这一刻你怎么回？",
+        opts:[
+          {tag:"A",say:"那明天可以借我吗？",
+           reply:"明天可以。",
+           fb:"接受拒绝，同时留一个替代方案。对话没有断，你也没吃亏。",kind:"ok"},
+          {tag:"B",say:"为什么别人可以借你就不行？",
+           reply:"……随便你怎么想。",
+           fb:"追问理由常被判为质问，对方会退。被拒绝时先接受，再问原因更安全。",kind:"warn"},
+          {tag:"C",say:"好吧。（走开，之后不理他）",
+           reply:"（他不知道你为什么生气，也不来问了。）",
+           fb:"沉默加疏远，对方读不到原因，下次也不会主动帮你。这是最常见的损失。",kind:"warn"}
+        ]
+      },
+      {
+        them:"明天可以。",
+        prompt:"结束前说什么？",
+        opts:[
+          {tag:"A",say:"好，第一节下课我来找你。谢谢。",
+           reply:"行。",
+           fb:"确认时间 + 道谢，一次拒绝反而变成了下次的约定。",kind:"ok"},
+          {tag:"B",say:"嗯。（不说话）",
+           reply:"（他有点不确定你是不是不高兴。）",
+           fb:"省略收尾会让对方猜测你的情绪，成本比多一句话高。",kind:"warn"}
+        ]
+      }
+    ]
+  },
+  {
+    id:"apologize",
+    title:"在食堂不小心撞到别人",
+    desc:"端着餐盘转身，撞到了后面同学的手臂，汤洒了一点在他袖子上。",
+    turns:[
+      {
+        them:"哎——",
+        prompt:"第一句？",
+        opts:[
+          {tag:"A",say:"对不起，撞到你了。袖子脏了，我帮你拿纸巾。",
+           reply:"没事没事，就一点。",
+           fb:"道歉 + 说明做什么，比只说“对不起”更能让对方放心。",kind:"ok"},
+          {tag:"B",say:"（装作没发生，端着盘子走了）",
+           reply:"（他站在原地，有点生气。）",
+           fb:"回避会被读成“故意的”。一个小事故因此变成真的矛盾。",kind:"warn"},
+          {tag:"C",say:"我不是故意的。",
+           reply:"哦……那算了。",
+           fb:"辩解不等于道歉。先道歉，再解释，顺序反了效果就弱。",kind:"warn"}
+        ]
+      },
+      {
+        them:"没事没事，就一点。",
+        prompt:"然后？",
+        opts:[
+          {tag:"A",say:"纸巾给你。要不要去擦一下？",
+           reply:"好，谢谢。",
+           fb:"给具体帮助，让道歉落到实处。",kind:"ok"},
+          {tag:"B",say:"（说第二次对不起，第三次对不起）",
+           reply:"都说了没事了……",
+           fb:"反复道歉会让对方反过来安慰你，负担转移了。一次到位就好。",kind:"warn"}
+        ]
+      }
+    ]
+  }
+];
+
+/* ================= 原型状态机 ================= */
+const el = (id)=>document.getElementById(id);
+const sceneList = el("scene-list"), stage = el("stage"), tally = el("tally"), stateChip = el("proto-state");
+let cur = null, turnIdx = 0, picks = [], done = false;
+
+function renderScenes(){
+  sceneList.innerHTML = "";
+  SCENES.forEach(s=>{
+    const b = document.createElement("button");
+    b.type="button"; b.className="scene-btn"; b.textContent=s.title;
+    b.setAttribute("aria-pressed", cur && cur.id===s.id ? "true":"false");
+    b.addEventListener("click", ()=>start(s));
+    sceneList.appendChild(b);
+  });
+}
+function start(s){
+  cur=s; turnIdx=0; picks=[]; done=false;
+  renderScenes();
+  stateChip.textContent="进行中";
+  stateChip.className="chip cond";
+  renderTurn();
+  renderTally();
+}
+function renderTurn(){
+  const t = cur.turns[turnIdx];
+  const box = document.createElement("div");
+  const head = document.createElement("p");
+  head.className="scene-desc";
+  head.innerHTML = `<b>场景：</b>${cur.desc}<br><span class="num">${turnIdx+1} / ${cur.turns.length}</span> · ${t.prompt}`;
+  box.appendChild(head);
+
+  const them = document.createElement("div");
+  them.className="line them";
+  them.innerHTML = `<span class="who">对方</span><span class="say">${t.them}</span>`;
+  box.appendChild(them);
+
+  const opts = document.createElement("div");
+  opts.className="opts";
+  opts.setAttribute("role","group");
+  opts.setAttribute("aria-label","选择你要说的话");
+  t.opts.forEach((o,i)=>{
+    const b=document.createElement("button");
+    b.type="button"; b.className="opt";
+    b.innerHTML=`<span class="tag">说法 ${o.tag}</span>${o.say}`;
+    b.addEventListener("click", ()=>{b.classList.add("picked"); choose(o, opts, box);});
+    opts.appendChild(b);
+  });
+  box.appendChild(opts);
+  stage.replaceChildren(box);
+}
+function choose(o, optsEl, box){
+  [...optsEl.children].forEach(b=>b.disabled=true);
+  const mine=document.createElement("div");
+  mine.className="line";
+  mine.innerHTML=`<span class="who">你</span><span class="say">${o.say}</span>`;
+  box.appendChild(mine);
+  const rep=document.createElement("div");
+  rep.className="line them";
+  rep.innerHTML=`<span class="who">对方</span><span class="say">${o.reply}</span>`;
+  box.appendChild(rep);
+  const fb=document.createElement("div");
+  fb.className="feedback"+(o.kind==="warn"?" warn":"");
+  fb.innerHTML=`<b>反馈</b>　${o.fb}`;
+  box.appendChild(fb);
+  picks.push(o.kind);
+  stateChip.textContent = `第 ${turnIdx+1} 回合已记录`;
+
+  const next=document.createElement("p");
+  next.style.margin="0";
+  if(turnIdx < cur.turns.length-1){
+    const b=document.createElement("button");
+    b.type="button"; b.className="btn btn-sm"; b.textContent="继续下一回合 →";
+    b.addEventListener("click",()=>{turnIdx++; renderTurn();});
+    next.appendChild(b);
+  }else{
+    done=true;
+    const b=document.createElement("button");
+    b.type="button"; b.className="btn btn-sm"; b.textContent="换一个场景再练";
+    b.addEventListener("click",()=>{ stage.querySelectorAll("button").forEach(x=>x.disabled=true);
+      document.querySelector('.scenes .scene-btn').focus(); });
+    next.appendChild(b);
+    stateChip.textContent="本轮完成";
+    stateChip.className="chip go";
+  }
+  box.appendChild(next);
+  renderTally();
+}
+function renderTally(){
+  if(!cur){ tally.innerHTML=`<span class="note">选择上方任一场景开始。练习记录只在本地，刷新即清空。</span>`; return; }
+  const n = picks.length;
+  const ok = picks.filter(k=>k==="ok").length;
+  const warn = n-ok;
+  tally.innerHTML = `
+    <div><b class="num">${n}</b>已练回合</div>
+    <div><b class="num">${ok}</b>信息完整的说法</div>
+    <div><b class="num">${warn}</b>对方需要猜测的说法</div>
+    <div><b class="num">${done?"是":"否"}</b>本轮完成</div>
+    <div class="note" style="max-width:34ch">这里的“说法”计数只描述这一轮的选择，<br>不是对孩子的评价。</div>`;
+}
+el("proto-reset").addEventListener("click",()=>{
+  cur=null;turnIdx=0;picks=[];done=false;
+  stateChip.textContent="待开始"; stateChip.className="chip demo";
+  renderScenes(); renderTally();
+  stage.innerHTML=`<p class="scene-desc" style="border:0;margin:0;padding:0">
+    选择场景开始。<b>借笔记</b>练“说清要什么与为什么”，<b>被拒绝</b>练“被拒绝后的第一句”，<b>撞到别人</b>练“道歉与具体帮助”。</p>`;
+});
+renderScenes(); renderTally();
+stage.innerHTML=`<p class="scene-desc" style="border:0;margin:0;padding:0">
+  选择场景开始。<b>借笔记</b>练“说清要什么与为什么”，<b>被拒绝</b>练“被拒绝后的第一句”，<b>撞到别人</b>练“道歉与具体帮助”。</p>`;
+
+/* ================= 阅读设置（真生效） ================= */
+function toggle(cls, btn){
+  const on = !document.body.classList.contains(cls);
+  document.body.classList.toggle(cls,on);
+  btn.setAttribute("aria-pressed", on?"true":"false");
+  try{ localStorage.setItem("xingqiao-"+cls, on?"1":"0"); }catch(e){}
+}
+[["no-motion","tg-motion"],["big","tg-size"],["hc","tg-contrast"]].forEach(([cls,id])=>{
+  const btn=el(id);
+  let saved=null; try{ saved=localStorage.getItem("xingqiao-"+cls); }catch(e){}
+  if(saved==="1"){ document.body.classList.add(cls); btn.setAttribute("aria-pressed","true"); }
+  btn.addEventListener("click",()=>toggle(cls,btn));
+});
+el("tg-print").addEventListener("click",()=>window.print());
+
+/* ================= 左侧轨道：点击跳转 + 当前章节高亮 ================= */
+const trackItems=[...document.querySelectorAll("#track li")];
+trackItems.forEach(li=>{
+  li.tabIndex=0;
+  li.setAttribute("role","link");
+  const go=()=>{ const t=document.getElementById(li.dataset.target);
+    if(t) t.scrollIntoView({behavior:document.body.classList.contains("no-motion")?"auto":"smooth",block:"start"}); };
+  li.addEventListener("click",go);
+  li.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){e.preventDefault();go();} });
+});
+const secs=trackItems.map(li=>document.getElementById(li.dataset.target)).filter(Boolean);
+if("IntersectionObserver" in window){
+  const io=new IntersectionObserver(es=>{
+    es.forEach(e=>{
+      if(e.isIntersecting){
+        const i=secs.indexOf(e.target);
+        if(i>-1){ trackItems.forEach(li=>li.removeAttribute("aria-current"));
+          trackItems[i].setAttribute("aria-current","true"); }
+      }
+    });
+  },{rootMargin:"-45% 0px -50% 0px"});
+  secs.forEach(s=>io.observe(s));
+}
+/* 滚动入场：只给区块标题，不做满屏淡入 */
+if(!matchMedia("(prefers-reduced-motion: reduce)").matches && !document.body.classList.contains("no-motion")){
+  const io2=new IntersectionObserver(es=>es.forEach(e=>{
+    if(e.isIntersecting){ e.target.classList.add("reveal"); io2.unobserve(e.target); }
+  }),{threshold:.18});
+  document.querySelectorAll("section > .sec-head").forEach(n=>io2.observe(n));
+}
+</script>
+</body>
+</html>
