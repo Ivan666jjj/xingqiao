@@ -1,0 +1,29 @@
+# 放到 /Applications/ServBay/package/etc/apache/vhosts/xingqiao.conf
+# 这是新增文件；ServBay 只会重写 servbay.host.conf，不会覆盖它。
+# 前提：后端已在 127.0.0.1:8000 运行（backend/run.sh）。
+
+<VirtualHost *:80>
+    ServerName xingqiao.localhost
+    DocumentRoot "/Applications/ServBay/www/xingqiao"
+
+    <Directory "/Applications/ServBay/www/xingqiao">
+        DirectoryIndex index.html
+        Options FollowSymLinks
+        AllowOverride None
+        Require all granted
+    </Directory>
+
+    ProxyPreserveHost On
+    ProxyPass        /api/  http://127.0.0.1:8000/api/
+    ProxyPassReverse /api/  http://127.0.0.1:8000/api/
+    ProxyPass        /health        http://127.0.0.1:8000/health
+    ProxyPassReverse /health        http://127.0.0.1:8000/health
+    ProxyPass        /docs          http://127.0.0.1:8000/docs
+    ProxyPassReverse /docs          http://127.0.0.1:8000/docs
+    ProxyPass        /openapi.json  http://127.0.0.1:8000/openapi.json
+    ProxyPassReverse /openapi.json  http://127.0.0.1:8000/openapi.json
+    ProxyTimeout 30
+
+    ErrorLog "/Applications/ServBay/logs/apache/xingqiao-error.log"
+    CustomLog "/Applications/ServBay/logs/apache/xingqiao-access.log" common
+</VirtualHost>

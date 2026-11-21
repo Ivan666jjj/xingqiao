@@ -611,6 +611,7 @@ footer .col .h{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;
         <div class="proto-bar">
           <p class="name">社交脚本练习 · 演示版</p>
           <div class="btns" style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+            <span class="chip no" id="api-state" title="正在检测同源 API">检查 API…</span>
             <span class="chip demo" id="proto-state">待开始</span>
             <button type="button" class="btn btn-ghost btn-sm" id="proto-reset">重新开始</button>
           </div>
@@ -1128,7 +1129,29 @@ const SCENES = [
 /* ================= 原型状态机 ================= */
 const el = (id)=>document.getElementById(id);
 const sceneList = el("scene-list"), stage = el("stage"), tally = el("tally"), stateChip = el("proto-state");
+const apiChip = el("api-state");
 let cur = null, turnIdx = 0, picks = [], done = false;
+
+/* 同源 API 探测：连上就标注，连不上不影响离线演示 */
+(async () => {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 1500);
+  try {
+    const r = await fetch("api/v1/scenes", {signal: ctrl.signal, headers: {Accept: "application/json"}});
+    clearTimeout(timer);
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const d = await r.json();
+    const n = (d.items || []).length;
+    apiChip.textContent = "本地 API 已连接 · " + n + " 个场景";
+    apiChip.className = "chip go";
+    apiChip.title = "原型对话仍使用内置脚本，避免断网演示失败；API 用于报名、记录与报告。";
+  } catch (e) {
+    clearTimeout(timer);
+    apiChip.textContent = "离线脚本模式";
+    apiChip.className = "chip no";
+    apiChip.title = "未检测到同源 /api；页面仍可完整演示。";
+  }
+})();
 
 function renderScenes(){
   sceneList.innerHTML = "";

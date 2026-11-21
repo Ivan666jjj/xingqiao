@@ -31,6 +31,23 @@ pytest -q
 
 详见 [`backend/README.md`](backend/README.md)。
 
+## 本地 ServBay 演示（页面 + API 同域）
+
+- 地址：<http://xingqiao.localhost/>
+- 静态目录：`/Applications/ServBay/www/xingqiao`
+- Apache vhost：`/Applications/ServBay/package/etc/apache/vhosts/xingqiao.conf`
+  （可复制 [`backend/deploy/servbay-vhost.conf.example`](backend/deploy/servbay-vhost.conf.example)）
+- `/api`、`/health`、`/docs`、`/openapi.json` 反代到 `127.0.0.1:8000`
+
+使用顺序：
+
+```bash
+cd backend && ./run.sh                      # 先起 API
+cp index.html /Applications/ServBay/www/xingqiao/index.html
+```
+
+页面工具条会自动探测同源 API：连上显示「本地 API 已连接 · 3 个场景」，连不上显示「离线脚本模式」，两种情况都能完整演示。
+
 ## 部署边界
 
 GitHub Pages 只能托管静态页面。这里的在线页面是**前端与计划书**；API 需要部署到阿里云等能跑 Python 的服务器，再把 `XQ_ALLOWED_ORIGINS` 指到 Pages 域名。
