@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>泛化任务卡 · 星桥</title>
+<link rel="stylesheet" href="assets/xq.css">
+<style>
+.task-list{display:grid;gap:.85rem;margin-top:1rem}
+.task{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:1rem 1.1rem;
+  box-shadow:var(--shadow-sm);display:grid;gap:.55rem}
+.task.done{background:var(--surface-2)}
+.task-top{display:flex;justify-content:space-between;gap:.8rem;align-items:flex-start;flex-wrap:wrap}
+.task h3{margin:0;font-size:1.02rem}
+.task p{margin:0;color:var(--ink-2);font-size:.9rem;line-height:1.65}
+.task .meta{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+.task .foot{display:flex;justify-content:space-between;gap:.8rem;align-items:center;flex-wrap:wrap}
+.task .foot .note{margin:0}
+.modal textarea{width:100%;min-height:5.5rem;border:1.5px solid var(--line-2);border-radius:12px;padding:.7rem .8rem;
+  font:inherit;background:var(--surface);color:var(--ink);resize:vertical}
+</style>
+</head>
+<body data-page="ex3">
+<div id="topbar"></div>
+<main class="page">
+  <div class="page-head">
+    <p class="kicker">展品 ③</p>
+    <h1>泛化任务卡</h1>
+    <p class="lede">把练过的话，拿到生活里用一次。没做到、被拒绝、只说了半句，都可以来打卡——完成的标准是“试过”，不是“成功”。</p>
+  </div>
+  <div id="task-list" class="task-list"></div>
+  <p class="note" style="margin-top:1rem">任务卡是合成示例，可由老师或家长改写。打卡内容只保存在这台设备。</p>
+</main>
+<script src="assets/xq.js"></script>
+<script>
+(function(){
+  'use strict';
+  const list = document.getElementById('task-list');
+  let current = null, pickMood = null;
+
+  function render(){
+    const s = XQ.get();
+    const tasks = [...s.tasks].sort((a,b)=>(a.status==='done'?1:0)-(b.status==='done'?1:0) || a.due-b.due);
+    if(!tasks.length){ list.innerHTML = '<p class="note">还没有任务卡。可以让老师或家长先写一张。</p>'; return; }
+    list.innerHTML = tasks.map(t=>{
+      const sc = XQ.scene(t.sceneId);
+      const done = t.status==='done' || t.checkins.length>0;
+      return `<article class="task ${done?'done':''}">
+        <div class="task-top">
+          <div><h3>${XQ.esc(t.title)}</h3>
+          <div class="meta"><span class="chip mute">${XQ.esc(sc.short)}</span>
+          <span class="chip ${done?'ok':'hot'}">${done?'已试过':'待尝试'}</span></div></div>
+          <span class="note">${XQ.fmtD(t.due)} 前</span>
+        </div>
+        <p>${XQ.esc(t.note)}</p>
+        ${t.checkins.length?`<p class="note">最近一次：${XQ.fmtDT(t.checkins[t.checkins.length-1].ts)} · ${XQ.esc(t.checkins[t.checkins.length-1].note||'已完成')}</p>`:''}
+        <div class="foot"><span class="note">打卡 ${t.checkins.length} 次</span>
+          <button type="button" class="btn ${done?'btn-ghost':'btn-sage'} btn-sm" data-id="${t.id}">${done?'再记一次':'打卡'}</button></div>
+      </article>`;
+    }).join('');
+    list.querySelectorAll('button[data-id]').forEach(b=>b.addEventListener('click',()=>openCheckin(b.dataset.id)));
+  }
+
+  function openCheckin(id){
+    const s = XQ.get();
+    current = s.tasks.find(t=>t.id===id);
+    if(!current) return;
+    pickMood = null;
+    const m = XQ.modal({
+      title:'打卡：' + current.title,
+      body:`<p class="note" style="margin-top:0">做了什么、对方怎么反应、你当时什么感觉，写一句就够。</p>
+        <label class="field"><span>这次怎么用的</span>
+        <textarea id="ck-note" maxlength="300" placeholder="例如：在小区门口跟保安说了“您好，我找人”。"></textarea></label>
+        <p class="note" style="margin:.4rem 0 .3rem">此刻的感觉（可不选）</p><div class="mood-row" id="ck-mood"></div>`,
+      foot:`<button type="button" class="btn btn-ghost btn-sm" id="ck-cancel">取消</button>
+        <button type="button" class="btn btn-sm" id="ck-save">保存打卡</button>`
+    });
+    XQ.moodScale(m.el.querySelector('#ck-mood'), v=>pickMood=v);
+    m.el.querySelector('#ck-cancel').addEventListener('click', m.close);
+    m.el.querySelector('#ck-save').addEventListener('click', ()=>{
+      const note = (m.el.querySelector('#ck-note').value || '').trim();
+      XQ.update(store=>{
+        const t = store.tasks.find(x=>x.id===current.id);
+        if(!t) return;
+        t.checkins.push({ts:Date.now(), note:note || '完成一次尝试', mood:pickMood});
+        t.status = 'done';
+      });
+      m.close(); render(); XQ.toast('打卡保存了。试过就算完成。',{icon:'check'});
+    });
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>

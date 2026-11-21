@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>社交脚本对话 · 星桥</title>
+<link rel="stylesheet" href="assets/xq.css">
+<style>
+.scene-btn svg{width:34px;height:34px;color:var(--terra)}
+.chat-card{padding:0;overflow:hidden;margin-top:1rem}
+.chat-head{display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;
+  padding:1rem 1.15rem;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.chat-head h2{font-size:1.15rem;margin:0 0 .2rem}
+.chat-head p{margin:0;color:var(--ink-3);font-size:.85rem}
+.messages{display:grid;gap:.65rem;padding:1.1rem;max-height:48vh;overflow:auto;background:var(--surface-2)}
+.msg{max-width:80%;padding:.7rem .9rem;border-radius:14px;line-height:1.6;font-size:.94rem}
+.msg.them{background:var(--surface);border:1px solid var(--line);justify-self:start;border-bottom-left-radius:4px}
+.msg.me{background:var(--terra-soft);border:1px solid var(--apricot);justify-self:end;border-bottom-right-radius:4px}
+.msg .who{display:block;font-size:.7rem;color:var(--ink-3);margin-bottom:.2em;letter-spacing:.04em}
+.opts{display:grid;gap:.55rem;padding:1rem 1.1rem;border-top:1px dashed var(--line)}
+.opt{text-align:left;background:var(--surface);border:1.5px solid var(--line-2);border-radius:12px;
+  padding:.7rem .85rem;line-height:1.55;font-size:.92rem;cursor:pointer}
+.opt:hover{border-color:var(--apricot);background:var(--surface-2)}
+.opt .tag{font-size:.7rem;color:var(--ink-3);margin-right:.4em}
+.composer{display:flex;gap:.6rem;padding:0 1.1rem 1.1rem;flex-wrap:wrap}
+.composer input{flex:1 1 220px;border:1.5px solid var(--line-2);border-radius:12px;padding:.65rem .8rem;
+  font:inherit;background:var(--surface);color:var(--ink)}
+.composer input:focus{outline:2px solid var(--apricot);outline-offset:1px}
+.summary{display:none;padding:1.1rem;border-top:1px solid var(--line);background:var(--sage-soft)}
+.summary.on{display:block}
+.summary h3{margin:0 0 .4rem;font-size:1rem}
+.actions{display:flex;gap:.6rem;flex-wrap:wrap;padding:0 1.1rem 1.1rem}
+@media(max-width:640px){.msg{max-width:92%}.messages{max-height:none}}
+</style>
+</head>
+<body data-page="ex1">
+<div id="topbar"></div>
+<main class="page">
+  <div class="page-head">
+    <p class="kicker">展品 ①</p>
+    <h1>社交脚本对话</h1>
+    <p class="lede">选一个场景，替自己回一句。对方会回应，卡住可以点提示；说错了也能重来。</p>
+  </div>
+
+  <section class="card" style="padding:1rem" aria-label="选择场景">
+    <div class="scenes" id="scene-list"></div>
+  </section>
+
+  <section class="chat-card card" aria-label="对话练习">
+    <div class="chat-head">
+      <div>
+        <h2 id="scene-title">先选一个场景</h2>
+        <p id="scene-note">场景会出现在这里。</p>
+      </div>
+      <span class="chip mute" id="turn-chip">第 0 轮</span>
+    </div>
+    <div class="messages" id="messages" aria-live="polite"></div>
+    <div class="opts" id="options"></div>
+    <div class="composer">
+      <label for="free" class="sr-only">自己说一句</label>
+      <input id="free" type="text" autocomplete="off" placeholder="也可以自己打一句，比如：你好，我想问一下……" maxlength="200">
+      <button type="button" class="btn btn-sm" id="send">发送</button>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn btn-ghost btn-sm" id="hint">给一句提示</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="reset">这一轮重来</button>
+      <button type="button" class="btn btn-sage btn-sm" id="finish">结束并保存</button>
+    </div>
+    <div class="summary" id="summary" aria-live="polite">
+      <h3 id="summary-title">这一轮结束了</h3>
+      <p id="summary-text"></p>
+      <p style="margin:.4rem 0 .6rem">结束前，给自己此刻的平静程度打个分（可不选）：</p>
+      <div class="mood-row" id="mood"></div>
+    </div>
+  </section>
+
+  <p class="note" style="margin-top:1rem">对话内容只保存在这台设备的浏览器里；如果开启了自选 AI，内容会发送到你填写的接口。</p>
+</main>
+
+<script src="assets/xq.js"></script>
+<script>
+(function(){
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const sceneList = $('scene-list'), messages = $('messages'), options = $('options');
+  const title = $('scene-title'), note = $('scene-note'), turnChip = $('turn-chip');
+  const free = $('free'), sendBtn = $('send'), hintBtn = $('hint');
+  const summary = $('summary'), summaryTitle = $('summary-title'), summaryText = $('summary-text');
+
+  const START = {
+    directions:{them:'（你在路口，看到一位阿姨正要过马路）', hint:'先打招呼，再说清要去哪里。'},
+    rejected:{them:'同学说：“今天不行，我自己要用。”', hint:'先接受这次拒绝，再给一个替代方案。'},
+    apologize:{them:'（你端着餐盘转身，撞到了后面同学的手臂）', hint:'先道歉，再给一个具体帮助。'},
+    question:{them:'（老师刚讲完一道题，你还没听懂）', hint:'说清哪一步没懂，再请老师讲一遍。'},
+    join:{them:'（几个同学在聊食堂新出的炸鸡排）', hint:'先听一会儿，再问一句“你们在聊什么”。'},
+    call:{them:'（你要给老师打电话请假，电话接通了）', hint:'先说你是谁，再说请什么假。'},
+    explain:{them:'同学说：“你怎么总是不理人？”', hint:'先说明不是对方的问题，再说自己的情况。'}
+  };
+
+  const OPTS = {
+    directions:[
+      {tag:'A',kind:'ok',say:'阿姨您好，打扰一下，请问最近的书店怎么走？'},
+      {tag:'B',kind:'warn',say:'喂，书店在哪？'},
+      {tag:'C',kind:'ok',say:'谢谢阿姨，我记住了，路上注意车。'}
+    ],
+    rejected:[
+      {tag:'A',kind:'ok',say:'那明天可以借我吗？'},
+      {tag:'B',kind:'warn',say:'为什么别人可以借你就不行？'},
+      {tag:'C',kind:'ok',say:'没关系，我再问问别人。'}
+    ],
+    apologize:[
+      {tag:'A',kind:'ok',say:'对不起，撞到你了。我帮你拿纸巾。'},
+      {tag:'B',kind:'warn',say:'我不是故意的。'},
+      {tag:'C',kind:'ok',say:'纸巾给你，要不要去擦一下？'}
+    ],
+    question:[
+      {tag:'A',kind:'ok',say:'老师，这一步我没听懂，能再讲一遍吗？'},
+      {tag:'B',kind:'warn',say:'这题你讲错了。'},
+      {tag:'C',kind:'ok',say:'老师，我想确认一下作业是第几题。'}
+    ],
+    join:[
+      {tag:'A',kind:'ok',say:'你们在聊什么？听起来很有意思。'},
+      {tag:'B',kind:'warn',say:'你们聊的都没意思。'},
+      {tag:'C',kind:'ok',say:'食堂新出的炸鸡排，我也想试试。'}
+    ],
+    call:[
+      {tag:'A',kind:'ok',say:'老师您好，我是小明。我发烧了，想请一天假。'},
+      {tag:'B',kind:'warn',say:'我不来上学了。'},
+      {tag:'C',kind:'ok',say:'好的，谢谢老师，老师再见。'}
+    ],
+    explain:[
+      {tag:'A',kind:'ok',say:'不是你的问题，是我戴着耳机没听见。'},
+      {tag:'B',kind:'warn',say:'我又没做错什么。'},
+      {tag:'C',kind:'ok',say:'教室太吵，我需要缓一下，不是不想理你。'}
+    ]
+  };
+
+  const REPLIES = {
+    directions:{ok:['阿姨停下脚步，指了指前面：“一直走，到第二个路口左转。”','她放慢语速又说了一遍，你听清了。'],warn:['阿姨皱了下眉：“你说什么？”','她没听清，转身走了。']},
+    rejected:{ok:['他想了想：“明天可以，你第一节下课来找我。”','“行，那明天给你。”'],warn:['“……随便你怎么想。”','他没再说话，走开了。']},
+    apologize:{ok:['“没事没事，就一点。”他接过纸巾擦了擦。','“真的没关系，你别紧张。”'],warn:['他看了你一眼，没说话，走开了。','“你至少说句对不起吧。”']},
+    question:{ok:['老师点点头：“哪一步没懂？我再讲一遍。”','“好，我们再看一下这一步。”'],warn:['老师停了一下：“你先听我讲完。”','“这个问题下课再说。”']},
+    join:{ok:['“我们在聊食堂新出的炸鸡排，你要不要一起？”','“你也觉得好吃吗？明天一起去？”'],warn:['他们停了一下，继续聊自己的。','“我们没聊什么。”']},
+    call:{ok:['“好的，我知道了，你好好休息，作业不急。”','“行，我记一下，明天让同学帮你带作业。”'],warn:['“你先说清楚你是谁。”','“你这样说我听不明白。”']},
+    explain:{ok:['“哦，原来是这样，我还以为你不想理我。”','“那你下次拍我一下就行。”'],warn:['“你总是这样。”','他看了你一眼，没再问。']}
+  };
+
+  const AI_SYS = '你是星桥社交练习里的“对方”，不是教练。只用一句自然的中文回应，最多两句；不要评价用户、不要解释规则、不要用第三人称描述，也不要给建议。不诊断、不说教、不给医疗建议、不要求眼神接触。';
+
+  let sceneId = null, turns = [], cur = null, busy = false, hintUsed = false;
+
+  function sceneMeta(id){ return XQ.scene(id); }
+  function currentCfg(){
+    try{ return JSON.parse(localStorage.getItem('xq.ai.v1')||'{}'); }catch(e){ return {}; }
+  }
+  function renderScenes(){
+    sceneList.innerHTML = XQ.SCENES.map(s=>`
+      <button type="button" class="scene-btn" data-id="${s.id}" aria-pressed="${sceneId===s.id}">
+        ${XQ.icon(s.icon)}<b>${XQ.esc(s.title)}</b><small>${XQ.esc(s.short)}</small>
+      </button>`).join('');
+    sceneList.querySelectorAll('.scene-btn').forEach(b=>b.addEventListener('click',()=>startScene(b.dataset.id)));
+  }
+  function renderMessages(){
+    messages.innerHTML = turns.map(m=>`<div class="msg ${m.role==='me'?'me':'them'}">
+      <span class="who">${m.role==='me'?'你':'对方'}</span>${XQ.esc(m.text)}</div>`).join('');
+    messages.scrollTop = messages.scrollHeight;
+  }
+  function renderOptions(){
+    if(!sceneId){ options.innerHTML=''; return; }
+    options.innerHTML = OPTS[sceneId].map(o=>`<button type="button" class="opt" data-tag="${o.tag}" data-kind="${o.kind}" data-say="${XQ.esc(o.say)}">
+      <span class="tag">${o.tag}</span>${XQ.esc(o.say)}</button>`).join('');
+    options.querySelectorAll('.opt').forEach(b=>b.addEventListener('click',()=>{
+      send(b.dataset.tag, b.dataset.say, b.dataset.kind);
+    }));
+  }
+  function startScene(id){
+    if(sceneId && turns.length) saveSession(false);
+    sceneId = id; turns = []; cur = null; busy = false; hintUsed = false;
+    const s = sceneMeta(id);
+    title.textContent = s.title;
+    note.textContent = START[id].them;
+    summary.classList.remove('on');
+    turns.push({role:'them', text:START[id].them});
+    renderScenes(); renderMessages(); renderOptions(); updateChip();
+    free.focus();
+  }
+  function updateChip(){
+    turnChip.textContent = '第 ' + turns.filter(t=>t.role==='me').length + ' 轮';
+  }
+  function guessKind(text){
+    if(/为什么|凭什么|必须|给我|喂|不理|走开/.test(text)) return 'warn';
+    if(/请|谢谢|对不起|抱歉|因为|可以|方便|没关系/.test(text)) return 'ok';
+    return 'ok';
+  }
+  async function aiReply(){
+    const cfg = currentCfg();
+    if(!cfg.on || !cfg.url || !cfg.model) return null;
+    const msgs = [{role:'system', content:AI_SYS + ' 当前场景：' + sceneMeta(sceneId).title + '。'}]
+      .concat(turns.slice(-8).map(t=>({role:t.role==='me'?'user':'assistant', content:t.text})));
+    try{
+      const r = await fetch(cfg.url, {
+        method:'POST',
+        headers:Object.assign({'Content-Type':'application/json'}, cfg.key?{Authorization:'Bearer '+cfg.key}:{}),
+        body:JSON.stringify({model:cfg.model, messages:msgs, max_tokens:120, temperature:0.6,
+          xq_mode:'roleplay', xq_scene:sceneMeta(sceneId).title})
+      });
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const d = await r.json();
+      return ((d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content)||'').trim() || null;
+    }catch(e){ return null; }
+  }
+  async function send(tag, text, kind){
+    if(!sceneId || busy || !text.trim()) return;
+    busy = true;
+    turns.push({role:'me', text:text.trim()});
+    renderMessages(); updateChip();
+    if(!cur) cur = {id:'s'+XQ.uid(), sceneId, ts:Date.now(), turns:[], ok:0, warn:0, completed:false, source:'本机练习'};
+    cur.turns.push({tag:tag||'·', say:text.trim(), kind:kind||guessKind(text)});
+    cur.ok = cur.turns.filter(t=>t.kind==='ok').length;
+    cur.warn = cur.turns.filter(t=>t.kind==='warn').length;
+    saveSession(false);
+    options.innerHTML = '<p class="note" style="margin:0">对方正在回应…</p>';
+    const ai = await aiReply();
+    const pool = REPLIES[sceneId][kind==='warn'?'warn':'ok'];
+    const reply = ai || pool[Math.floor(Math.random()*pool.length)];
+    turns.push({role:'them', text:reply});
+    renderMessages(); renderOptions(); busy = false;
+  }
+  function saveSession(done){
+    if(!cur || !cur.turns.length) return;
+    cur.completed = !!done;
+    XQ.update(s=>{
+      const i = s.sessions.findIndex(x=>x.id===cur.id);
+      if(i>=0) s.sessions[i]=cur; else s.sessions.unshift(cur);
+    });
+  }
+  function finish(){
+    if(!cur || !cur.turns.length){ XQ.toast('先说一轮再保存。',{icon:'chat'}); return; }
+    saveSession(true);
+    summary.classList.add('on');
+    summaryTitle.textContent = '这一轮保存了';
+    summaryText.textContent = `共 ${cur.turns.length} 回合：信息完整 ${cur.ok} 次，对方需要猜测 ${cur.warn} 次。没有评分，也没有对错。`;
+    XQ.moodScale($('mood'), v=>{ cur.mood=v; saveSession(true); XQ.toast('情绪评分已保存',{icon:'heart'}); });
+    summary.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+
+  $('send').addEventListener('click', ()=>{ const v=free.value.trim(); if(v){ free.value=''; send('·', v, guessKind(v)); } });
+  free.addEventListener('keydown', e=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); $('send').click(); } });
+  hintBtn.addEventListener('click', ()=>{ if(sceneId){ hintUsed=true; XQ.toast(START[sceneId].hint,{icon:'bulb'}); } });
+  $('reset').addEventListener('click', ()=>{ if(sceneId) startScene(sceneId); });
+  $('finish').addEventListener('click', finish);
+
+  renderScenes();
+  messages.innerHTML = '<p class="note" style="margin:0">从上面选一个场景开始。也可以直接打字，或先点“给一句提示”。</p>';
+})();
+</script>
+</body>
+</html>

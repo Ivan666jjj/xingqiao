@@ -1,11 +1,13 @@
 # 星桥 · 自闭症青少年社会生活练习与记录平台
 
-48 小时黑客松项目：一份可交互的计划书，加一套已经跑通测试的后端 API。
+48 小时黑客松项目：计划书、可玩前端、FastAPI 后端，以及千问文本/实时接入。
 
-- 在线页面：https://ivan666jjj.github.io/xingqiao/
-- 计划书与可玩原型：`index.html`（同 `星桥_黑客松计划书_20261121.html`）
-- 文献与数据底稿：`星桥_文献与数据底稿_20261121.md`
+- 在线计划书：https://ivan666jjj.github.io/xingqiao/
+- 小组试用包：见 [`README_小组试用.md`](README_小组试用.md)
+- 前端：`frontend/`（首页 + ① 对话 ② 情绪 ③ 任务卡 ④ 记录）
 - 后端：`backend/`
+- 阿里云部署：[`阿里云服务器租用与部署指南.md`](阿里云服务器租用与部署指南.md)
+- 文献与数据底稿：`星桥_文献与数据底稿_20261121.md`
 
 ## 这个页面是什么
 
@@ -13,13 +15,15 @@
 
 ## 后端是什么
 
-FastAPI + SQLite，55 个测试，23 个端点：
+FastAPI + SQLite，56 个测试，23 个端点：
 
 - 同意门禁：没有有效同意不能开始练习
 - 风险词升级：自伤/暴力词暂停会话并进入人工审核队列
 - 删除权：删除主体时级联清除会话、回合、同意记录
 - 小样本抑制：群体报告少于 10 人不出比例
 - 已签名事件 outbox（Webhook 投递 worker 尚未实现）
+- 千问文本：OpenAI 兼容 `/v1/chat/completions`，输出先过 13 条负规则
+- 千问实时语音：服务端脚本已验证，浏览器中转尚未实现
 
 ```bash
 cd backend
@@ -43,7 +47,8 @@ pytest -q
 
 ```bash
 cd backend && ./run.sh                      # 先起 API
-cp index.html /Applications/ServBay/www/xingqiao/index.html
+# 前端整套（首页 + 四个展品）
+cp -R frontend/* /Applications/ServBay/www/xingqiao/
 ```
 
 页面工具条会自动探测同源 API：连上显示「本地 API 已连接 · 3 个场景」，连不上显示「离线脚本模式」，两种情况都能完整演示。

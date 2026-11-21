@@ -11,6 +11,10 @@ SYSTEM_PROMPT = """你是“星桥”的社交练习陪练，面向自闭症谱�
 6. 遇到自伤、被欺凌、家暴等内容，停止练习，建议找可信任的大人。
 """
 
+ROLEPLAY_PROMPT = """你是星桥社交练习里的“对方”，当前场景：{scene}。
+只以对方身份回一句自然的中文，最多两句；不要评价用户、不要解释规则、不要用第三人称描述、不要给建议。
+不诊断、不说教、不给医疗建议、不要求眼神接触。"""
+
 RETRY_PROMPT = """上一版回复包含不允许的表达。请改写为更安全的一版：
 不要出现治愈/诊断/污名/说教/依赖/医疗建议/强迫眼神接触；最多 3 句。"""
 
@@ -48,10 +52,17 @@ def guarded_chat(
     messages: list[dict],
     model: str | None = None,
     max_tokens: int = 400,
+    mode: str | None = None,
+    scene: str | None = None,
 ) -> dict:
     model_name = resolve_model(model, client.model)
     history = _clean_messages(messages)
-    base = [{"role": "system", "content": SYSTEM_PROMPT}] + history
+    system_prompt = (
+        ROLEPLAY_PROMPT.format(scene=scene or "社交练习")
+        if mode == "roleplay"
+        else SYSTEM_PROMPT
+    )
+    base = [{"role": "system", "content": system_prompt}] + history
 
     try:
         first = client.chat(base, model=model_name, max_tokens=max_tokens)

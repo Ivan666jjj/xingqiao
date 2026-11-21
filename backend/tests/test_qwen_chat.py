@@ -69,6 +69,19 @@ def test_chat_completion_returns_openai_shape_and_system_prompt(tmp_path, monkey
     assert "星桥" in fake.calls[0][0]["content"]
 
 
+def test_roleplay_mode_uses_scene_specific_prompt(tmp_path, monkeypatch):
+    fake = FakeQwen(["往前走两个路口，右边有家书店。"])
+    c = make_client(tmp_path, monkeypatch, fake)
+    payload = body()
+    payload["xq_mode"] = "roleplay"
+    payload["xq_scene"] = "向路人问去书店的路"
+    r = c.post("/v1/chat/completions", json=payload, headers=AUTH)
+    assert r.status_code == 200
+    system = fake.calls[0][0]["content"]
+    assert "对方" in system
+    assert "书店" in system
+
+
 def test_banned_output_is_regenerated_once(tmp_path, monkeypatch):
     fake = FakeQwen(["自闭症是可以治愈的。", "我在，你慢慢说。"])
     c = make_client(tmp_path, monkeypatch, fake)

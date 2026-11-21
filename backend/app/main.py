@@ -99,6 +99,8 @@ class ChatCompletionIn(BaseModel):
     max_tokens: int | None = Field(default=400, ge=1, le=2000)
     temperature: float | None = Field(default=0.6, ge=0, le=2)
     stream: bool | None = False
+    xq_mode: str | None = None
+    xq_scene: str | None = Field(default=None, max_length=80)
 
 
 RISK_TERMS = {
@@ -720,7 +722,12 @@ def create_app(db_path: str | None = None, qwen_client=None) -> FastAPI:
             )
 
         result = guarded_chat(
-            qwen, messages, model=body.model, max_tokens=body.max_tokens or 400
+            qwen,
+            messages,
+            model=body.model,
+            max_tokens=body.max_tokens or 400,
+            mode=body.xq_mode,
+            scene=body.xq_scene,
         )
         xq = {"guard": result["guard"], "model": result["model"]}
         if result.get("error"):

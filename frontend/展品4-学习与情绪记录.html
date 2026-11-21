@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>学习与情绪记录 · 星桥</title>
+<link rel="stylesheet" href="assets/xq.css">
+<style>
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.8rem;margin:1rem 0}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:1rem 1.1rem}
+.stat .k{font-size:.78rem;color:var(--ink-3);letter-spacing:.04em}
+.stat .v{font-family:var(--serif);font-size:1.9rem;line-height:1.2;margin:.2rem 0}
+.stat .n{font-size:.8rem;color:var(--ink-2)}
+.timeline{display:grid;gap:.6rem;margin-top:.6rem}
+.ev{display:grid;grid-template-columns:auto 1fr auto;gap:.7rem;align-items:start;
+  padding:.7rem .85rem;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.ev .dot{width:9px;height:9px;border-radius:50%;background:var(--sage);margin-top:.5em}
+.ev .t{font-size:.9rem;line-height:1.5}
+.ev .t small{display:block;color:var(--ink-3);font-size:.78rem}
+.ev .when{font-size:.76rem;color:var(--ink-3);white-space:nowrap}
+.empty{padding:1.2rem;border:1px dashed var(--line-2);border-radius:12px;color:var(--ink-3);font-size:.9rem}
+@media(max-width:560px){.ev{grid-template-columns:auto 1fr}.ev .when{grid-column:2;text-align:left}}
+</style>
+</head>
+<body data-page="ex4">
+<div id="topbar"></div>
+<main class="page">
+  <div class="page-head">
+    <p class="kicker">展品 ④</p>
+    <h1>学习与情绪记录</h1>
+    <p class="lede">练了什么、和上次比怎样、下次练什么。记录只给你和信任的大人看，不排名、不打分。</p>
+  </div>
+
+  <section class="stat-grid" id="stats" aria-label="本周概览"></section>
+
+  <section class="card" style="padding:1rem 1.1rem" aria-label="最近记录">
+    <div style="display:flex;justify-content:space-between;gap:1rem;align-items:center;flex-wrap:wrap">
+      <h2 style="margin:0;font-size:1.1rem">最近发生了什么</h2>
+      <button type="button" class="btn btn-ghost btn-sm" id="export">导出 CSV</button>
+    </div>
+    <div class="timeline" id="timeline"></div>
+  </section>
+
+  <p class="note" style="margin-top:1rem">情绪评分只用于回看自己的变化，不用于诊断，也不与别人比较。</p>
+</main>
+<script src="assets/xq.js"></script>
+<script>
+(function(){
+  'use strict';
+  const stats = document.getElementById('stats'), timeline = document.getElementById('timeline');
+
+  function render(){
+    const s = XQ.get();
+    const ev = XQ.events(s);
+    const week = ev.filter(e=>XQ.weekAgo(e.ts));
+    const sessions = s.sessions.filter(x=>XQ.weekAgo(x.ts));
+    const checkins = s.tasks.reduce((a,t)=>a+t.checkins.filter(c=>XQ.weekAgo(c.ts)).length,0);
+    const quiz = s.quizRuns.filter(x=>XQ.weekAgo(x.ts));
+    const quizCorrect = quiz.reduce((a,x)=>a+x.correct,0);
+    const quizTotal = quiz.reduce((a,x)=>a+x.total,0);
+    stats.innerHTML = [
+      ['本周练习', week.filter(e=>e.type==='dialogue').length, '次对话练习'],
+      ['本周打卡', checkins, '次线下尝试'],
+      ['情绪题', quizTotal?`${quizCorrect}/${quizTotal}`:'—', quiz.length?`${quiz.length} 组，答对率不是目标`:'还没有做'],
+      ['最近活动', ev[0]?XQ.fmtD(ev[0].ts):'—', ev[0]?ev[0].label:'等第一次练习']
+    ].map(([k,v,n])=>`<div class="stat"><div class="k">${k}</div><div class="v">${XQ.esc(String(v))}</div><div class="n">${XQ.esc(n)}</div></div>`).join('');
+
+    if(!ev.length){
+      timeline.innerHTML = '<div class="empty">还没有记录。去 ① 对话练习或 ③ 任务卡走一次，这里就会出现。</div>';
+      return;
+    }
+    timeline.innerHTML = ev.slice(0,40).map(e=>`
+      <div class="ev"><span class="dot"></span>
+        <span class="t">${XQ.esc(e.label)}<small>${XQ.esc(e.detail)}</small></span>
+        <span class="when">${XQ.fmtDT(e.ts)}</span>
+      </div>`).join('');
+  }
+
+  document.getElementById('export').addEventListener('click', ()=>{
+    const rows = [['时间','类型','场景','内容']];
+    XQ.events().forEach(e=>rows.push([new Date(e.ts).toLocaleString('zh-CN'), e.type, e.label, e.detail]));
+    XQ.downloadCSV('星桥练习记录.csv', rows);
+  });
+
+  render();
+  XQ.onStore(render);
+})();
+</script>
+</body>
+</html>
