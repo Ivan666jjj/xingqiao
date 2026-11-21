@@ -57,6 +57,9 @@ python3 -m pytest -q
 | GET | `/api/v1/admin/outbox` | 管理员 | 已完成会话的签名事件 |
 | POST | `/api/v1/safety/check` | 管理员 | 输出侧护栏：模型草稿先过规则再发 |
 | GET | `/api/v1/rules` | 管理员 | 负规则目录、安全短语与 BCC 证据 |
+| POST | `/v1/chat/completions` | 聊天 token | OpenAI 兼容；千问文本 + 输出护栏 |
+| POST | `/api/v1/chat/completions` | 聊天 token | 同上，同源反代用 |
+| GET | `/api/v1/realtime/status` | 管理员 | 检查千问文本/实时模型是否可用 |
 | GET | `/api/v1/corpus/stats` | 管理员 | 语料库统计（仅话语观察用途） |
 | GET | `/api/v1/corpus/search?q=` | 管理员 | 清洁语料检索（不供聊天使用） |
 | DELETE | `/api/v1/subject` | 参与者 | 级联删除本人全部记录 |
@@ -149,6 +152,18 @@ curl -s -X POST http://127.0.0.1:8000/api/v1/safety/check \
 规则共 13 条，分治愈叙事、诊断断言、污名化、强迫眼神、正常化压力、医疗建议、依赖诱导、否定感受、空头保证、夸大效果、危机淡化、索要隐私、幼儿化。BCC 直接支持其中五类（治愈 42 条、污名 123 条、诊断 2 条、正常化 2 条、危机淡化 2 条），其余来自研究与伦理要求。
 
 完整接入说明：[`docs/rule-pack.md`](docs/rule-pack.md)。
+
+## 千问接入
+
+Key 存 macOS 钥匙串 `qwen-dashscope-key`，`run.sh` 自动读取；不要写进 `.env` 或前端。
+
+- 文本：`POST /v1/chat/completions`（OpenAI 兼容），默认 `qwen-plus`；
+- 输出先过负规则，命中就重写一次，仍命中则回退安全模板；
+- 实时：`qwen3.8-omni-flash-realtime` 已实测通（音频进、文字+音频出）；
+- `GET /api/v1/realtime/status` 可检查模型可用性；
+- 浏览器实时语音还需要后端 WebSocket 中转或临时 Key，当前未实现。
+
+完整记录与前端填法：[`docs/qwen-integration.md`](docs/qwen-integration.md)。
 
 ## 数据表
 

@@ -10,12 +10,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
+from .chat import FALLBACK as CHAT_FALLBACK, guarded_chat
 from .coach import DISCLAIMER, suggestions_for
 from .config import load_config
 from .content import Content
 from .corpus import search as corpus_search
 from .corpus import stats as corpus_stats
 from .db import Database
+from .qwen import QwenClient, QwenError
 from .rules import SAFE_PHRASES, VERSION as RULES_VERSION, check_text, list_rules
 from .security import (
     new_participant_token,
@@ -86,6 +88,19 @@ class SafetyIn(BaseModel):
     text: str = Field(min_length=1, max_length=2000)
 
 
+class ChatMessageIn(BaseModel):
+    role: str
+    content: str | list | None = None
+
+
+class ChatCompletionIn(BaseModel):
+    model: str | None = None
+    messages: list[ChatMessageIn]
+    max_tokens: int | None = Field(default=400, ge=1, le=2000)
+    temperature: float | None = Field(default=0.6, ge=0, le=2)
+    stream: bool | None = False
+
+
 RISK_TERMS = {
     "self_harm": ("自杀", "自伤", "割腕", "不想活", "活着没意思", "跳楼"),
     "violence": ("打我", "欺负", "霸凌", "家暴", "威胁我"),
@@ -100,14 +115,18 @@ def detect_risk(text: str | None) -> list[str]:
     return [flag for flag, terms in RISK_TERMS.items() if any(t in text for t in terms)]
 
 
-def create_app(db_path: str | None = None) -> FastAPI:
+def create_app(db_path: str | None = None, qwen_client=None) -> FastAPI:
     cfg = load_config(db_path)
     db = Database(cfg.db_path)
     content = Content.load(Path(__file__).resolve().parents[1] / "data")
+    qwen = qwen_client or QwenClient(
+        cfg.qwen_api_key, cfg.qwen_base_url, cfg.qwen_text_model, cfg.qwen_timeout
+    )
 
     app = FastAPI(title="星桥 API", version="0.1.0")
     app.state.db = db
     app.state.config = cfg
+    app.state.qwen = qwen
     app.add_middleware(
         CORSMiddleware,
         allow_origins=list(cfg.allowed_origins),
@@ -159,7 +178,9 @@ def create_app(db_path: str | None = None) -> FastAPI:
         )
         return row is not None
 
-    def add_moderation(pid: str, source: str, ref_id: str, text: str, flags: list[str]) -> int:
+    def add_moderation(
+        pid: str | None, source: str, ref_id: str, text: str, flags: list[str]
+    ) -> int:
         cur = db.execute(
             """INSERT INTO moderation_items
                (participant_id, source, ref_id, excerpt, risk_flags, status, created_at)
@@ -634,6 +655,94 @@ def create_app(db_path: str | None = None) -> FastAPI:
             }
 
         return suggestions_for(body.sceneId, body.text)
+
+    def _chat_authorized(authorization: str | None) -> bool:
+        if not authorization or not authorization.startswith("Bearer "):
+            return False
+        return same(authorization.removeprefix("Bearer ").strip(), cfg.chat_token)
+
+    def _content_text(content) -> str:
+        if isinstance(content, str):
+            return content
+        if isinstance(content, list):
+            parts = []
+            for part in content:
+                if isinstance(part, dict) and part.get("type") in ("text", "input_text"):
+                    parts.append(str(part.get("text", "")))
+            return "\n".join(p for p in parts if p)
+        return ""
+
+    def _completion(content: str, model: str, usage: dict, xq: dict) -> dict:
+        return {
+            "id": "chatcmpl-" + str(int(time.time() * 1000)),
+            "object": "chat.completion",
+            "created": int(time.time()),
+            "model": model,
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {"role": "assistant", "content": content},
+                    "finish_reason": "stop",
+                }
+            ],
+            "usage": usage or {},
+            "xq": xq,
+        }
+
+    @app.post("/v1/chat/completions")
+    @app.post("/api/v1/chat/completions")
+    def chat_completions(
+        body: ChatCompletionIn, authorization: str | None = Header(None)
+    ):
+        if not _chat_authorized(authorization):
+            raise HTTPException(status_code=401, detail="invalid_chat_token")
+        messages = [
+            {"role": m.role, "content": _content_text(m.content)}
+            for m in body.messages
+            if m.role in ("user", "assistant", "system")
+        ]
+        if not messages:
+            raise HTTPException(status_code=400, detail="messages_required")
+
+        last_user = next(
+            (m["content"] for m in reversed(messages) if m["role"] == "user"), ""
+        )
+        risk_flags = detect_risk(last_user)
+        if risk_flags:
+            moderation_id = add_moderation(
+                None, "chat_free_text", "chat", last_user, risk_flags
+            )
+            return _completion(
+                SAFE_REPLY,
+                "xingqiao-guard",
+                {},
+                {"safety": {"escalated": True, "moderationId": moderation_id}},
+            )
+
+        result = guarded_chat(
+            qwen, messages, model=body.model, max_tokens=body.max_tokens or 400
+        )
+        xq = {"guard": result["guard"], "model": result["model"]}
+        if result.get("error"):
+            xq["error"] = result["error"]
+        return _completion(result["content"], result["model"], result["usage"], xq)
+
+    @app.get("/api/v1/realtime/status")
+    def realtime_status(x_admin_token: str | None = Header(None)):
+        if not admin_ok(x_admin_token):
+            raise HTTPException(status_code=401, detail="invalid_admin_token")
+        try:
+            models = qwen.models()
+        except QwenError as exc:
+            return {"ok": False, "error": str(exc)}
+        target = cfg.qwen_realtime_model
+        return {
+            "ok": target in models,
+            "textModel": cfg.qwen_text_model,
+            "textAvailable": cfg.qwen_text_model in models,
+            "realtimeModel": target,
+            "realtimeAvailable": target in models,
+        }
 
     @app.post("/api/v1/safety/check")
     def safety_check(body: SafetyIn, x_admin_token: str | None = Header(None)):
